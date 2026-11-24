@@ -55,10 +55,12 @@ Las pruebas de GPG crean un llavero temporal y no modifican el llavero personal.
 ## Organización del proyecto
 
 - `app.py`: ventana, pestañas y acciones de la interfaz.
+- `gepege_ui.py`: estilos, iconos y componentes visuales compartidos.
 - `gpg_backend.py`: ejecución de GPG y preparación de los comandos didácticos.
 - `tests/`: pruebas de las operaciones con llaveros temporales.
 - `packaging/`: icono, entrada de escritorio y guion para crear el AppImage.
 - `requirements*.txt`: dependencias de ejecución y de compilación.
+- `DEPENDENCIAS.md`: referencias para revisar las licencias de componentes externos antes de distribuirlos.
 - `AGENTS.md`: indicaciones para asistentes que trabajen en el proyecto.
 - `.github/workflows/`: comprobaciones automáticas que GitHub ejecutará cuando se suban cambios o se abra una propuesta.
 
