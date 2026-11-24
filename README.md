@@ -77,4 +77,4 @@ Este repositorio no incluye `appimagetool` ni un AppImage precompilado. Comprueb
 
 ## Estado
 
-Primera versión funcional en desarrollo, 0.1b. El proyecto aún no tiene una licencia elegida. La versión AppImage para x86_64 se ha probado en el equipo de desarrollo; su compatibilidad con Kali y otras distribuciones está pendiente de comprobación.
+Primera versión funcional en desarrollo, 0.1b. El proyecto aún no tiene una licencia elegida. La versión AppImage para x86_64 se ha compilado en Ubuntu 22.04 y se ha comprobado su arranque sin pantalla en Debian 12; su uso en Kali y otras distribuciones está pendiente de comprobación.

@@ -11,7 +11,7 @@ chmod +x GePeGe-x86_64.AppImage
 ./GePeGe-x86_64.AppImage
 ```
 
-Necesitas GnuPG (`gpg`) instalado. El paquete se ha compilado y probado en el equipo de desarrollo; todavía no se ha probado en Kali ni en otras distribuciones y podría no funcionar en sistemas con bibliotecas más antiguas. El archivo `GePeGe-x86_64.AppImage.sha256` permite comprobar la integridad de la descarga con `sha256sum -c GePeGe-x86_64.AppImage.sha256` en la carpeta que contenga ambos archivos.
+Necesitas GnuPG (`gpg`) instalado. El paquete se ha compilado en Ubuntu 22.04; se ha comprobado el arranque sin pantalla en el equipo de desarrollo y en un contenedor Debian 12 con bibliotecas gráficas. Todavía no se ha probado en Kali ni en una sesión gráfica Debian y podría no funcionar en otros sistemas. El archivo `GePeGe-x86_64.AppImage.sha256` permite comprobar la integridad de la descarga con `sha256sum -c GePeGe-x86_64.AppImage.sha256` en la carpeta que contenga ambos archivos.
 
 ## Limitaciones conocidas
 
