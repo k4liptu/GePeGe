@@ -4,6 +4,8 @@ Aplicación de escritorio para aprender a usar GnuPG con una interfaz visual. Es
 
 ![Ventana de GePeGe con un ejemplo de cifrado simétrico](assets/GePeGe-cifrar.png)
 
+**Descarga:** puedes obtener el AppImage para Linux x86_64 desde la [primera versión de prueba (release 0.1b)](https://github.com/k4liptu/GePeGe/releases/tag/v0.1b).
+
 La consola muestra primero un ejemplo didáctico para la terminal y después el comando real usado por la aplicación. Los nombres `clave.asc`, `mensaje.txt` y los de salida son ejemplos: los archivos de entrada deben existir y las redirecciones de salida pueden sobrescribir archivos; GePeGe pasa el texto por la entrada estándar. El comando real añade opciones de automatización y, cuando es necesario, pasa la contraseña mediante un descriptor privado. La consulta en línea es HTTPS y no ejecuta GPG. La comparación de hashes la realiza GePeGe después de calcularlos con GPG.
 
 ## Qué permite hacer
