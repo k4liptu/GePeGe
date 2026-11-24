@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+*.AppImage
+*.AppImage.sha256
+AppDir/
+.pytest_cache/
+# Material criptográfico y exportaciones locales: no deben subirse por accidente.
+*.asc
+*.gpg
+*.pgp
+*.key
+*.pem
+*.kbx
+.gnupg/

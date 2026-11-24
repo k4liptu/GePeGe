@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=GePeGe
+Comment=Aprende criptografía con GnuPG
+Exec=GePeGe
+Icon=GePeGe
+Categories=Education;Security;Utility;
+Terminal=false
