@@ -2,6 +2,8 @@
 
 Aplicación de escritorio para aprender a usar GnuPG con una interfaz visual. Está pensada para alumnado de ciclos formativos: muestra el comando usado y el diagnóstico de GPG para relacionar los botones con la terminal.
 
+![Ventana de GePeGe con un ejemplo de cifrado simétrico](assets/GePeGe-cifrar.png)
+
 La consola muestra primero un ejemplo didáctico para la terminal y después el comando real usado por la aplicación. Los nombres `clave.asc`, `mensaje.txt` y los de salida son ejemplos: los archivos de entrada deben existir y las redirecciones de salida pueden sobrescribir archivos; GePeGe pasa el texto por la entrada estándar. El comando real añade opciones de automatización y, cuando es necesario, pasa la contraseña mediante un descriptor privado. La consulta en línea es HTTPS y no ejecuta GPG. La comparación de hashes la realiza GePeGe después de calcularlos con GPG.
 
 ## Qué permite hacer
@@ -84,9 +86,11 @@ El guion `packaging/build-appimage.sh` prepara un AppDir con PyInstaller y lo co
 
 Este repositorio no incluye `appimagetool` ni un AppImage precompilado. Comprueba también los requisitos de FUSE de la distribución donde lo vayas a ejecutar.
 
+Para la versión de prueba se utilizó Ubuntu 22.04 en un contenedor con `packaging/build-ubuntu22-container.sh`. El guion espera el código en `/src` (solo lectura), la carpeta de salida en `/out`, y los archivos oficiales `appimagetool` y el runtime de AppImage en `/tools/appimagetool` y `/tools/runtime`. Instala las dependencias dentro del contenedor; no debe ejecutarse directamente en el sistema anfitrión.
+
 ## Estado
 
-Primera versión funcional en desarrollo, 0.1b. La versión AppImage para x86_64 se ha compilado en Ubuntu 22.04 y se ha comprobado su arranque sin pantalla en Debian 12; su uso en Kali y otras distribuciones está pendiente de comprobación.
+Primera versión funcional en desarrollo, 0.1b. La versión AppImage para x86_64 se ha compilado en Ubuntu 22.04; se han ejecutado las pruebas GPG en un contenedor Kali Rolling y comprobado que la ventana arranca allí con una pantalla virtual. Aún falta probar el uso interactivo en una instalación completa de Kali y otras distribuciones.
 
 ## Licencia
 
