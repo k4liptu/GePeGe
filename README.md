@@ -27,6 +27,12 @@ python3 -m venv .venv
 .venv/bin/python app.py
 ```
 
+### Ejecutar desde Visual Studio Code
+
+Abre la carpeta `GePeGe` completa en VS Code, instala la extensión de Python de Microsoft y permite que VS Code confíe en la carpeta si aparece esa pregunta. En **Ejecutar y depurar**, elige **GePeGe: abrir aplicación** y pulsa el triángulo verde o `F5`. La configuración usa el Python de `.venv`, que debe estar preparado con los comandos anteriores. Para detener la aplicación, cierra su ventana o utiliza el botón de detener de VS Code.
+
+Ejecutar abre la aplicación desde el código; no genera un AppImage. El empaquetado se explica más abajo.
+
 La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se defina `GNUPGHOME`). Los comandos se ejecutan localmente; únicamente la consulta de claves necesita conexión a Internet. La contraseña se pasa a GPG mediante un descriptor privado, no en el comando ni en archivos. El comando mostrado representa el descriptor mediante `<descriptor>`; no es directamente copiable tal cual.
 
 ## Uso en clase
@@ -63,6 +69,7 @@ Las pruebas de GPG crean un llavero temporal y no modifican el llavero personal.
 - `DEPENDENCIAS.md`: referencias para revisar las licencias de componentes externos antes de distribuirlos.
 - `AGENTS.md`: indicaciones para asistentes que trabajen en el proyecto.
 - `.github/workflows/`: comprobaciones automáticas que GitHub ejecutará cuando se suban cambios o se abra una propuesta.
+- `.vscode/`: configuración para abrir la aplicación y ejecutar pruebas desde Visual Studio Code.
 
 La carpeta `.venv` y los archivos generados, incluidos los AppImage, no se incorporan a Git. Consulta [GUIA_GITHUB.md](GUIA_GITHUB.md) para preparar la primera publicación.
 
