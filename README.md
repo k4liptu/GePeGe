@@ -60,6 +60,7 @@ Las pruebas de GPG crean un llavero temporal y no modifican el llavero personal.
 - `packaging/`: icono, entrada de escritorio y guion para crear el AppImage.
 - `requirements*.txt`: dependencias de ejecución y de compilación.
 - `AGENTS.md`: indicaciones para asistentes que trabajen en el proyecto.
+- `.github/workflows/`: comprobaciones automáticas que GitHub ejecutará cuando se suban cambios o se abra una propuesta.
 
 La carpeta `.venv` y los archivos generados, incluidos los AppImage, no se incorporan a Git. Consulta [GUIA_GITHUB.md](GUIA_GITHUB.md) para preparar la primera publicación.
 
