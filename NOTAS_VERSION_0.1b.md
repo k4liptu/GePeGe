@@ -20,4 +20,4 @@ Necesitas GnuPG (`gpg`) instalado. El paquete se ha compilado en Ubuntu 22.04; s
 - El cifrado trabaja con mensajes de texto UTF-8, no con archivos binarios arbitrarios. La pestaña Hash sí admite archivos binarios.
 - Para cifrar y firmar simultáneamente en modo simétrico se usa la misma contraseña para ambas operaciones.
 - La búsqueda de claves depende de keys.openpgp.org y necesita Internet. Verifica las huellas por otro canal.
-- El proyecto todavía no tiene una licencia elegida.
+- El código propio está bajo GPL v3; las dependencias tienen sus propias licencias, descritas en `DEPENDENCIAS.md`.

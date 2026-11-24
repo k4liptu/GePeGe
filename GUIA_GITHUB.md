@@ -4,11 +4,20 @@ Git guarda el historial de cambios en tu ordenador. GitHub aloja una copia en In
 
 ## 1. Antes de publicar
 
-Decide si el repositorio será **privado** (acceso limitado) o **público** (cualquiera podrá ver el código). Elige también una licencia si quieres dar permiso a otras personas para utilizar, modificar o distribuir el proyecto. Todavía no se ha elegido ninguna.
+Decide si el repositorio será **privado** (acceso limitado) o **público** (cualquiera podrá ver el código). GePeGe utiliza la licencia GPL v3 para su código propio; los componentes externos tienen sus propias condiciones.
 
 El archivo `.gitignore` excluye el entorno virtual, los AppImage y extensiones habituales de claves. Comprueba igualmente los archivos antes de subirlos: no incluyas contraseñas, claves privadas, datos de alumnos ni mensajes reales. El llavero personal está fuera del proyecto y no forma parte del repositorio.
 
-## 2. Crear el primer commit local
+## 2. Revisar los cambios locales
+
+El proyecto ya tiene commits locales. Para consultar si hay cambios pendientes:
+
+```bash
+cd ~/Proyectos/GePeGe
+git status
+```
+
+En VS Code puedes ver los archivos modificados en **Control de código fuente**. Cuando hagas nuevos cambios y quieras guardar una versión, puedes usar esa vista o los comandos siguientes:
 
 En una terminal:
 
@@ -18,14 +27,14 @@ git status
 git add .
 git diff --cached --stat
 git diff --cached
-git commit -m "Primera versión de GePeGe"
+git commit -m "Describe aquí los cambios"
 ```
 
 Revisa la salida de los dos comandos `git diff` antes del commit; pulsa `q` para salir del visor si aparece. Git puede solicitar un nombre y correo de autor si no están configurados. Estos datos quedan en el historial de los commits y se compartirán si publicas el repositorio.
 
-## 3. Crear el repositorio en GitHub
+## 3. Crear o conectar el repositorio en GitHub
 
-Inicia sesión en GitHub y crea un repositorio llamado `GePeGe`. Selecciona su visibilidad. Como el proyecto ya contiene archivos locales, crea el repositorio vacío, sin añadir desde GitHub un README, `.gitignore` ni licencia; así evitarás iniciar dos historiales distintos.
+Si aún no existe un repositorio para GePeGe, puedes usar **Publicar en GitHub** en la vista Control de código fuente de VS Code y escoger el nombre y la visibilidad. Si ya existe, usa su dirección como remoto. Para crearlo manualmente en GitHub, elige un repositorio vacío, sin añadir allí un README, `.gitignore` ni licencia; el proyecto ya los incluye.
 
 GitHub mostrará la dirección del repositorio. Con esa dirección, desde la carpeta del proyecto:
 

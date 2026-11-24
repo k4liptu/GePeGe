@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
 """GePeGe: laboratorio visual de GnuPG para Linux."""
 import sys
 import urllib.error

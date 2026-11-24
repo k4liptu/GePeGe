@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if ! command -v appimagetool >/dev/null; then
@@ -9,11 +10,12 @@ if [[ ! -x .venv/bin/pyinstaller ]]; then
   echo 'Instala primero las dependencias de compilación: .venv/bin/pip install -r requirements-build.txt' >&2
   exit 1
 fi
-.venv/bin/pyinstaller --noconfirm --clean --windowed --name GePeGe --icon packaging/GePeGe.svg --add-data 'packaging/GePeGe.svg:packaging' app.py
+.venv/bin/pyinstaller --noconfirm --clean --windowed --name GePeGe --icon packaging/GePeGe.svg --add-data 'packaging/GePeGe.svg:packaging' --add-data 'LICENSE:.' app.py
 mkdir -p AppDir/usr/bin
 cp -a dist/GePeGe/. AppDir/usr/bin/
 cp packaging/GePeGe.desktop AppDir/
 cp packaging/GePeGe.svg AppDir/
+cp LICENSE AppDir/
 cat > AppDir/AppRun <<'RUN'
 #!/usr/bin/env bash
 HERE="$(dirname "$(readlink -f "$0")")"

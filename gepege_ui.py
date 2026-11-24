@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-only
 """Estilos, iconos y componentes compartidos de la interfaz de GePeGe."""
 from pathlib import Path
 from PySide6.QtCore import QByteArray, QObject, QRunnable, Signal, Qt

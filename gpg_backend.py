@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-only
 """Operaciones GPG sin shell; las contraseñas viajan por un descriptor privado."""
 import os
 import re
