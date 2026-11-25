@@ -4,7 +4,8 @@ Esta revisión organiza la gestión de claves y mejora el cifrado con claves pú
 
 - El almacén reúne la consulta, búsqueda, importación y exportación de claves; la generación tiene su propia pestaña.
 - Al cifrar con una clave cuya identidad GPG no considera plenamente confiable, se muestra la huella y se solicita confirmación para ese mensaje. Comprueba la huella con su propietario por un canal independiente. La confianza del llavero no se modifica.
-- La exportación de claves públicas permite elegir el archivo y su ubicación.
+- La exportación de claves públicas se realiza desde el botón de cada clave del almacén y permite elegir el archivo y su ubicación.
+- Al generar o importar claves, una confirmación indica dónde consultarlas; los errores permanecen en el diagnóstico.
 - El campo de contraseña aparece cuando se necesita para cifrado simétrico o firma.
 - El menú Ayuda permite consultar las versiones publicadas. La actualización es manual.
 - Se corrige la búsqueda en keys.openpgp.org en sistemas donde el AppImage no encontraba los certificados de confianza. La conexión sigue verificando el certificado del servidor y necesita los certificados del sistema instalados.

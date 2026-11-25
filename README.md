@@ -41,7 +41,7 @@ La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se d
 
 ## Uso en clase
 
-1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada desde **Almacén de claves**.
+1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada con el botón de su fila en **Almacén de claves**.
 2. Importa la clave pública de otro alumno y verifica su huella por otro canal.
 3. En **Cifrar**, escribe el texto, selecciona cifrado asimétrico y el destinatario. Opcionalmente, selecciona tu clave para firmar.
 4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo.

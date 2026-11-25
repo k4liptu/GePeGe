@@ -100,7 +100,7 @@ class Window(QMainWindow):
         self.key_list.itemSelectionChanged.connect(self.update_key_rows)
         v.addWidget(button('Actualizar claves', self.refresh))
         g=QGroupBox('Consultar keys.openpgp.org'); f=QFormLayout(g); self.lookup=QLineEdit(); self.lookup.setPlaceholderText('Correo electrónico o huella completa'); f.addRow('Buscar', self.lookup); f.addRow(label('Descarga la clave encontrada a la caja de importación. Verifica siempre su huella antes de confiar en ella.')); f.addRow(button('Buscar clave', self.search)); v.addWidget(g)
-        g=QGroupBox('Importar y exportar'); a=QVBoxLayout(g); self.key_text=textedit('Pega una clave en formato ASCII…'); a.addWidget(self.key_text); h=QHBoxLayout(); h.addWidget(button('Abrir archivo…', lambda: self.load_file(self.key_text))); h.addWidget(button('Importar clave', self.import_key)); a.addLayout(h); self.export_key=QComboBox(); a.addWidget(self.export_key); a.addWidget(button('Exportar clave pública', self.export)); v.addWidget(g); v.addStretch(); return w
+        g=QGroupBox('Importar clave'); a=QVBoxLayout(g); self.key_text=textedit('Pega una clave en formato ASCII…'); a.addWidget(self.key_text); h=QHBoxLayout(); h.addWidget(button('Abrir archivo…', lambda: self.load_file(self.key_text))); h.addWidget(button('Importar clave', self.import_key)); a.addLayout(h); v.addWidget(g); v.addStretch(); return w
     def generate_page(self):
         w=QWidget(); v=QVBoxLayout(w)
         g=QGroupBox('Crear un par de claves'); f=QFormLayout(g); self.name=QLineEdit(); self.email=QLineEdit(); self.key_pass=password(); self.key_algorithm=QComboBox(); self.expiry=QComboBox()
@@ -201,10 +201,26 @@ class Window(QMainWindow):
             self.decrypt_pass.clear()
         self.call(data)
     def generate(self):
-        self.call({'action':'generate', 'name':self.name.text(), 'email':self.email.text(), 'password':self.key_pass.text(), 'algorithm':self.key_algorithm.currentData(), 'expiry':self.expiry.currentData()}, True); self.key_pass.clear()
-    def import_key(self): self.call({'action':'import', 'text':self.key_text.toPlainText()}, True)
-    def export(self):
-        key = self.export_key.currentData() or ''
+        data = {'action':'generate', 'name':self.name.text(), 'email':self.email.text(), 'password':self.key_pass.text(), 'algorithm':self.key_algorithm.currentData(), 'expiry':self.expiry.currentData()}
+        self.key_pass.clear()
+        def done(result):
+            self.show_result(result)
+            if result.get('ok'):
+                self.refresh(silent=True)
+                QMessageBox.information(self, 'Claves generadas', 'El par de claves se ha generado correctamente. Puedes consultarlo en «Almacén de claves».')
+        self.start(lambda: execute(data), done)
+    def import_key(self):
+        data = {'action':'import', 'text':self.key_text.toPlainText()}
+        def done(result):
+            self.show_result(result)
+            if result.get('ok'):
+                self.refresh(silent=True)
+                QMessageBox.information(self, 'Importación completada', 'La importación se ha completado correctamente. Puedes consultar las claves en «Almacén de claves».')
+        self.start(lambda: execute(data), done)
+    def export_selected_key(self):
+        key = self.selected_key()
+        if key: self.export_public_key(key['fingerprint'])
+    def export_public_key(self, key):
         if not key: return self.show_result({'ok':False, 'detail':'Selecciona una clave pública.'})
         filename, _ = QFileDialog.getSaveFileName(self, 'Exportar clave pública', 'clave-publica.asc', 'Clave OpenPGP ASCII (*.asc);;Todos los archivos (*)')
         if not filename: return
@@ -252,7 +268,7 @@ class Window(QMainWindow):
                 text = f"{k['uid'] or '(sin identidad)'}\nHuella: {k['fingerprint']}  |  validez: {k['validity']}"
                 item = QListWidgetItem(); item.setData(Qt.ItemDataRole.UserRole, k); self.key_list.addItem(item)
                 row = KeyRow(self, item, text); item.setSizeHint(row.sizeHint()); self.key_list.setItemWidget(item, row)
-            for combo, keys, empty in [(self.recipient,self.public,'Selecciona destinatario'), (self.export_key,self.public,'Selecciona clave pública'), (self.signer,self.secret,'Sin firma')]:
+            for combo, keys, empty in [(self.recipient,self.public,'Selecciona destinatario'), (self.signer,self.secret,'Sin firma')]:
                 combo.clear(); combo.addItem(empty, '')
                 for k in keys: combo.addItem(f"{k['uid'] or 'Sin identidad'} — {k['id']}", k['fingerprint'])
             if not silent:

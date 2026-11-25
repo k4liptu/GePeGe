@@ -68,22 +68,32 @@ def delete_icon():
     painter = QPainter(pixmap); renderer.render(painter); painter.end(); pixmap.setDevicePixelRatio(2)
     return QIcon(pixmap)
 
+def export_icon():
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#173457" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/></svg>'
+    renderer = QSvgRenderer(QByteArray(svg.encode('utf-8')))
+    pixmap = QPixmap(48, 48); pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap); renderer.render(painter); painter.end(); pixmap.setDevicePixelRatio(2)
+    return QIcon(pixmap)
+
 class KeyRow(QWidget):
     def __init__(self, owner, item, text):
         super().__init__(); self.owner = owner; self.item = item; self.setObjectName('keyRow')
         row = QHBoxLayout(self); row.setContentsMargins(8, 5, 8, 5)
         row.addWidget(label(text), 1)
         self.info = QToolButton(); self.info.setObjectName('keyAction'); self.info.setIcon(owner.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation)); self.info.setToolTip('Información de la clave'); self.info.setAccessibleName('Información de la clave'); self.info.clicked.connect(self.show_info); row.addWidget(self.info)
+        self.export = QToolButton(); self.export.setObjectName('keyAction'); self.export.setIcon(export_icon()); self.export.setToolTip('Exportar clave pública'); self.export.setAccessibleName('Exportar clave pública'); self.export.clicked.connect(self.export_key); row.addWidget(self.export)
         self.delete = QToolButton(); self.delete.setObjectName('deleteKey'); self.delete.setIcon(delete_icon()); self.delete.setToolTip('Borrar esta clave'); self.delete.setAccessibleName('Borrar esta clave'); self.delete.clicked.connect(self.delete_key); row.addWidget(self.delete)
         self.set_selected(False)
     def mousePressEvent(self, event):
         self.owner.key_list.setCurrentItem(self.item)
         super().mousePressEvent(event)
     def set_selected(self, selected):
-        self.setProperty('selected', selected); self.info.setVisible(selected); self.delete.setVisible(selected)
+        self.setProperty('selected', selected); self.info.setVisible(selected); self.export.setVisible(selected); self.delete.setVisible(selected)
         self.style().unpolish(self); self.style().polish(self); self.update()
     def show_info(self):
         self.owner.key_list.setCurrentItem(self.item); self.owner.key_info()
+    def export_key(self):
+        self.owner.key_list.setCurrentItem(self.item); self.owner.export_selected_key()
     def delete_key(self):
         self.owner.key_list.setCurrentItem(self.item); self.owner.delete_key()
 
