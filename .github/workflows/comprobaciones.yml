@@ -44,6 +44,8 @@ jobs:
               window = Window()
               window.show()
               app.processEvents()
-              assert window.tabs.count() == 5
+              assert [window.tabs.tabText(i) for i in range(window.tabs.count())] == [
+                  'Cifrar', 'Descifrar', 'Almacén de claves', 'Generar claves', 'Hash', 'Aprende'
+              ]
               assert not window.windowIcon().isNull()
           PY
