@@ -21,7 +21,7 @@ La consola muestra primero un ejemplo didáctico para la terminal y después el 
 
 ## Requisitos e instalación en Linux
 
-Se necesita Python 3.10 o superior, GnuPG 2.2 o superior y una sesión gráfica Linux con bibliotecas compatibles con Qt. En Debian/Kali, instala los paquetes de Python, `python3-venv` y `gnupg` con el gestor de paquetes de la distribución. En Arch y derivadas, instala `python` y `gnupg`.
+Se necesita Python 3.10 o superior, GnuPG 2.2 o superior y una sesión gráfica Linux con bibliotecas compatibles con Qt. Para la búsqueda en línea se necesitan los certificados de confianza del sistema (`ca-certificates`). En Debian/Kali, instala los paquetes de Python, `python3-venv` y `gnupg` con el gestor de paquetes de la distribución. En Arch y derivadas, instala `python` y `gnupg`.
 
 Desde la carpeta del proyecto:
 

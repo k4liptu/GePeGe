@@ -7,6 +7,7 @@ Esta revisión organiza la gestión de claves y mejora el cifrado con claves pú
 - La exportación de claves públicas permite elegir el archivo y su ubicación.
 - El campo de contraseña aparece cuando se necesita para cifrado simétrico o firma.
 - El menú Ayuda permite consultar las versiones publicadas. La actualización es manual.
+- Se corrige la búsqueda en keys.openpgp.org en sistemas donde el AppImage no encontraba los certificados de confianza. La conexión sigue verificando el certificado del servidor y necesita los certificados del sistema instalados.
 
 GePeGe necesita GnuPG instalado y utiliza el llavero del usuario. Cifra mensajes de texto UTF-8, no archivos binarios arbitrarios. Consulta el README y DEPENDENCIAS.md para conocer los requisitos y limitaciones.
 

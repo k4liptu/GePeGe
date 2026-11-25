@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """GePeGe: laboratorio visual de GnuPG para Linux."""
 import sys
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -14,6 +15,30 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFormLayout
 from gpg_backend import execute
 
 from gepege_ui import APP_ICON, STYLE, KeyRow, Task, button, label, password, tab_icon, textedit
+
+def https_context():
+    """Usa las autoridades del sistema también en paquetes compilados en otra distribución."""
+    context = ssl.create_default_context()
+    if not context.get_ca_certs():
+        for filename in ('/etc/ssl/certs/ca-certificates.crt', '/etc/ssl/cert.pem', '/etc/pki/tls/certs/ca-bundle.crt'):
+            if Path(filename).is_file():
+                context.load_verify_locations(cafile=filename)
+                break
+    return context
+
+def fetch_key(query):
+    query = query.strip()
+    if not query: raise ValueError('Introduce un correo electrónico o una huella completa.')
+    is_fpr = len(query) == 40 and all(c in '0123456789abcdefABCDEF' for c in query)
+    if not is_fpr and ('@' not in query or '/' in query):
+        raise ValueError('Introduce un correo válido o una huella de 40 caracteres hexadecimales.')
+    url = 'https://keys.openpgp.org/vks/v1/' + ('by-fingerprint/' if is_fpr else 'by-email/') + urllib.parse.quote(query, safe='')
+    try:
+        with urllib.request.urlopen(url, timeout=15, context=https_context()) as response: data = response.read(1_000_001)
+        if len(data) > 1_000_000: raise ValueError('La respuesta supera 1 MB.')
+        return {'ok':True, 'output':data.decode('utf-8'), 'detail':'Clave descargada. Comprueba la huella y pulsa «Importar clave».', 'command':'Consulta HTTPS a keys.openpgp.org (no se ejecuta GPG).'}
+    except (OSError, UnicodeError, ValueError) as exc:
+        return {'ok':False, 'detail':f'No se pudo obtener la clave: {exc}', 'command':'Consulta HTTPS a keys.openpgp.org (no se ejecuta GPG).'}
 
 class Window(QMainWindow):
     def __init__(self):
@@ -239,20 +264,10 @@ class Window(QMainWindow):
         self.start(do, done)
     def search(self):
         query=self.lookup.text().strip()
-        if not query: return self.show_result({'ok':False,'detail':'Introduce un correo electrónico o una huella completa.'})
-        is_fpr=len(query)==40 and all(c in '0123456789abcdefABCDEF' for c in query)
-        if not is_fpr and ('@' not in query or '/' in query): return self.show_result({'ok':False,'detail':'Introduce un correo válido o una huella de 40 caracteres hexadecimales.'})
-        url='https://keys.openpgp.org/vks/v1/' + ('by-fingerprint/' if is_fpr else 'by-email/') + urllib.parse.quote(query, safe='')
-        def fetch():
-            try:
-                with urllib.request.urlopen(url, timeout=15) as response: data=response.read(1_000_001)
-                if len(data)>1_000_000: raise ValueError('La respuesta supera 1 MB.')
-                return {'ok':True, 'output':data.decode('utf-8'), 'detail':'Clave descargada. Comprueba la huella y pulsa «Importar clave».', 'command':'Consulta HTTPS a keys.openpgp.org (no se ejecuta GPG).'}
-            except (OSError, UnicodeError, ValueError) as exc: return {'ok':False, 'detail':f'No se pudo obtener la clave: {exc}', 'command':'Consulta HTTPS a keys.openpgp.org (no se ejecuta GPG).'}
         def done(r):
             self.show_result(r)
             if r.get('ok'): self.key_text.setPlainText(r['output'])
-        self.start(fetch, done)
+        self.start(lambda: fetch_key(query), done)
 
 def main():
     app=QApplication(sys.argv)
