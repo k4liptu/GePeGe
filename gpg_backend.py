@@ -107,6 +107,8 @@ def execute(payload):
             args += ['--symmetric']
         elif mode == 'asymmetric':
             if not value('recipient'): raise ValueError('Selecciona una clave pública destinataria.')
+            if payload.get('confirmed_recipient') is True:
+                args += ['--trust-model', 'always']
             args += ['--recipient', value('recipient'), '--encrypt']
         else: raise ValueError('Selecciona un modo de cifrado válido.')
         if value('signer'):

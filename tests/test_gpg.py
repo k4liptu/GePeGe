@@ -43,9 +43,17 @@ class Integration(unittest.TestCase):
             os.chmod(other, 0o700)
             with patch.dict(os.environ, {'GNUPGHOME': other}):
                 self.assertTrue(execute({'action':'import','text':exported['output']})['ok'])
+                data = {'action':'encrypt', 'mode':'asymmetric', 'text':'Mensaje importado', 'recipient':key}
+                rejected = execute(data)
+                self.assertFalse(rejected['ok'], rejected['detail'])
+                encrypted = execute({**data, 'confirmed_recipient':True})
+                self.assertTrue(encrypted['ok'], encrypted['detail'])
+                self.assertIn('--trust-model always', encrypted['teaching'])
                 deleted = execute({'action':'delete_key','key':key,'has_secret':False})
                 self.assertIn('--list-secret-keys', deleted['teaching']); self.assertIn('--delete-key', deleted['teaching'])
                 self.assertTrue(deleted['ok'],deleted['detail']); self.assertEqual(execute({'action':'keys'})['keys'],[])
+        decrypted = execute({'action':'decrypt', 'text':encrypted['output'], 'password':'clave-prueba'})
+        self.assertTrue(decrypted['ok'], decrypted['detail']); self.assertEqual(decrypted['output'], 'Mensaje importado')
         with self.assertRaises(ValueError): execute({'action':'delete_key','key':key,'has_secret':False})
         deleted = execute({'action':'delete_key','key':key,'has_secret':True})
         self.assertIn('--delete-secret-and-public-key', deleted['teaching'])

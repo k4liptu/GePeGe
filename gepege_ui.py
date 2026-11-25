@@ -47,6 +47,7 @@ TAB_SYMBOLS = (
     '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/>',
     '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7-2.6"/><path d="M12 14v3"/>',
     '<circle cx="8" cy="9" r="4"/><path d="M11 12l8 8m-3-3 2-2m-5-1 2-2"/>',
+    '<circle cx="8" cy="9" r="4"/><path d="M11 12l7 7m-3-3 2-2M18 3v6m-3-3h6"/>',
     '<path d="M9 3 6 21M17 3l-3 18M4 9h17M3 15h17"/>',
     '<path d="M12 6c-2-2-5-3-9-2v14c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2zm0 0v14"/>'
 )

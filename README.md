@@ -4,7 +4,7 @@ Aplicación de escritorio para aprender a usar GnuPG con una interfaz visual. Es
 
 ![Ventana de GePeGe con un ejemplo de cifrado simétrico](assets/GePeGe-cifrar.png)
 
-**Descarga:** puedes obtener el AppImage para Linux x86_64 desde la [primera versión de prueba (release 0.1b)](https://github.com/k4liptu/GePeGe/releases/tag/v0.1b).
+**Descarga:** consulta las [versiones publicadas](https://github.com/k4liptu/GePeGe/releases) para obtener el AppImage para Linux x86_64.
 
 La consola muestra primero un ejemplo didáctico para la terminal y después el comando real usado por la aplicación. Los nombres `clave.asc`, `mensaje.txt` y los de salida son ejemplos: los archivos de entrada deben existir y las redirecciones de salida pueden sobrescribir archivos; GePeGe pasa el texto por la entrada estándar. El comando real añade opciones de automatización y, cuando es necesario, pasa la contraseña mediante un descriptor privado. La consulta en línea es HTTPS y no ejecuta GPG. La comparación de hashes la realiza GePeGe después de calcularlos con GPG.
 
@@ -41,17 +41,17 @@ La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se d
 
 ## Uso en clase
 
-1. Crea una clave desde **Claves** y comparte únicamente la clave pública exportada.
+1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada desde **Almacén de claves**.
 2. Importa la clave pública de otro alumno y verifica su huella por otro canal.
 3. En **Cifrar**, escribe el texto, selecciona cifrado asimétrico y el destinatario. Opcionalmente, selecciona tu clave para firmar.
 4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo.
 5. Para practicar cifrado simétrico, selecciona esa opción y comparte la contraseña por un canal seguro diferente.
 
-GPG puede rechazar claves públicas importadas si aún no confía en ellas. Verifica siempre la huella y configura la confianza de acuerdo con la práctica y la política del aula. Una firma válida acredita su relación con una clave, pero no verifica por sí sola la identidad de su propietario.
+GPG puede rechazar claves públicas importadas si aún no confía en ellas. Comprueba la huella con el destinatario por un canal independiente; GePeGe permite confirmar su uso para ese mensaje sin modificar la confianza del llavero. Una firma válida acredita su relación con una clave, pero no verifica por sí sola la identidad de su propietario.
 
 ## Limitaciones de esta primera versión
 
-Se admiten mensajes UTF-8 y claves ASCII, no archivos binarios arbitrarios. El cifrado asimétrico usa el modelo de confianza de GPG; no fuerza la aceptación de claves. Al cifrar simétricamente y firmar a la vez se utiliza la misma contraseña para ambas operaciones. Los mensajes y las contraseñas se mantienen temporalmente en memoria durante la operación; no se guardan deliberadamente en archivos de la aplicación. Se exportan claves públicas, no privadas. La búsqueda depende de la disponibilidad y las políticas de publicación del servidor.
+Se admiten mensajes UTF-8 y claves ASCII, no archivos binarios arbitrarios. El cifrado asimétrico usa la confianza de GPG o, previa confirmación para ese mensaje, permite usar una clave sin confianza plena. GPG sigue rechazando claves no aptas para cifrar. Al cifrar simétricamente y firmar a la vez se utiliza la misma contraseña para ambas operaciones. Los mensajes y las contraseñas se mantienen temporalmente en memoria durante la operación; no se guardan deliberadamente en archivos de la aplicación. Se exportan claves públicas, no privadas, mediante un diálogo para elegir el destino. La búsqueda depende de la disponibilidad y las políticas de publicación del servidor.
 
 ## Pruebas
 
@@ -92,7 +92,7 @@ Para la versión de prueba se utilizó Ubuntu 22.04 en un contenedor con `packag
 
 ## Estado
 
-Primera versión funcional en desarrollo, 0.1b. La versión AppImage para x86_64 se ha compilado en Ubuntu 22.04; se han ejecutado las pruebas GPG en un contenedor Kali Rolling y comprobado que la ventana arranca allí con una pantalla virtual. Aún falta probar el uso interactivo en una instalación completa de Kali y otras distribuciones.
+Versión 0.2. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
 
 ## Licencia
 

@@ -6,8 +6,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from PySide6.QtCore import QThreadPool, Qt
-from PySide6.QtGui import QAction, QColor, QIcon, QPalette
+from PySide6.QtCore import QThreadPool, Qt, QUrl
+from PySide6.QtGui import QAction, QColor, QDesktopServices, QIcon, QPalette
 from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFormLayout, QGroupBox,
     QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMessageBox,
     QScrollArea, QSizePolicy, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
@@ -25,7 +25,7 @@ class Window(QMainWindow):
         split = QSplitter(); layout.addWidget(split, 1)
         self.tabs = QTabWidget(); split.addWidget(self.tabs)
         self.tabs.addTab(self.scroll(self.encrypt_page()), 'Cifrar'); self.tabs.addTab(self.scroll(self.decrypt_page()), 'Descifrar')
-        self.tabs.addTab(self.scroll(self.keys()), 'Claves'); self.tabs.addTab(self.scroll(self.hash_page()), 'Hash'); self.tabs.addTab(self.scroll(self.help_page()), 'Aprende')
+        self.tabs.addTab(self.scroll(self.keys()), 'Almacén de claves'); self.tabs.addTab(self.scroll(self.generate_page()), 'Generar claves'); self.tabs.addTab(self.scroll(self.hash_page()), 'Hash'); self.tabs.addTab(self.scroll(self.help_page()), 'Aprende')
         self.tabs.currentChanged.connect(self.update_tab_icons); self.update_tab_icons()
         split.addWidget(self.results()); split.setSizes([650, 450]); self.create_menus(); self.refresh()
     def update_tab_icons(self, *_):
@@ -36,15 +36,16 @@ class Window(QMainWindow):
         save = QAction('Guardar resultado…', self); save.setShortcut('Ctrl+S'); save.triggered.connect(self.save); archive.addAction(save)
         archive.addSeparator(); close = QAction('Salir', self); close.setShortcut('Ctrl+Q'); close.triggered.connect(self.close); archive.addAction(close)
         view = bar.addMenu('&Ver')
-        for index, name in enumerate(('Cifrar', 'Descifrar', 'Claves', 'Hash', 'Aprende')):
+        for index, name in enumerate(('Cifrar', 'Descifrar', 'Almacén de claves', 'Generar claves', 'Hash', 'Aprende')):
             action = QAction(name, self); action.triggered.connect(lambda checked=False, i=index: self.tabs.setCurrentIndex(i)); view.addAction(action)
         tools = bar.addMenu('&Herramientas')
         refresh = QAction('Actualizar llavero', self); refresh.triggered.connect(lambda: self.refresh()); tools.addAction(refresh)
         help_menu = bar.addMenu('Ay&uda')
-        guide = QAction('Guía de aprendizaje', self); guide.triggered.connect(lambda: self.tabs.setCurrentIndex(4)); help_menu.addAction(guide)
+        guide = QAction('Guía de aprendizaje', self); guide.triggered.connect(lambda: self.tabs.setCurrentIndex(5)); help_menu.addAction(guide)
+        releases = QAction('Consultar actualizaciones…', self); releases.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/k4liptu/GePeGe/releases'))); help_menu.addAction(releases)
         about = QAction('Acerca de GePeGe', self); about.triggered.connect(self.about); help_menu.addAction(about)
     def about(self):
-        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.1b\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
+        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.2\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
     def scroll(self, w):
         s = QScrollArea(); s.setWidgetResizable(True); s.setWidget(w); return s
     def encrypt_page(self):
@@ -53,11 +54,12 @@ class Window(QMainWindow):
         self.encrypt_message=textedit('Escribe aquí el mensaje que quieres cifrar…', 170); v.addWidget(self.encrypt_message)
         h=QHBoxLayout(); h.addWidget(button('Importar mensaje…', lambda: self.load_file(self.encrypt_message))); h.addWidget(button('Limpiar', self.encrypt_message.clear)); v.addLayout(h)
         self.encrypt_form=QFormLayout(); self.mode=QComboBox(); self.mode.addItem('Asimétrico — clave pública', 'asymmetric'); self.mode.addItem('Simétrico — contraseña', 'symmetric'); self.mode.currentIndexChanged.connect(self.mode_changed)
-        self.recipient=QComboBox(); self.signer=QComboBox(); self.encrypt_pass=password(); self.cipher=QComboBox()
+        self.recipient=QComboBox(); self.signer=QComboBox(); self.signer.currentIndexChanged.connect(self.mode_changed); self.encrypt_pass=password(); self.cipher=QComboBox()
         for title, value in [('Automático — recomendado', 'default'), ('AES-128', 'AES128'), ('AES-256', 'AES256')]: self.cipher.addItem(title, value)
         self.encrypt_form.addRow('Tipo de cifrado', self.mode); self.encrypt_form.addRow('Clave del destinatario', self.recipient); self.encrypt_form.addRow('Algoritmo del mensaje', self.cipher); self.encrypt_form.addRow('Firmar con (opcional)', self.signer); self.encrypt_form.addRow('Contraseña', self.encrypt_pass); v.addLayout(self.encrypt_form)
         v.addWidget(label('En el cifrado asimétrico, la clave del destinatario protege una clave de sesión; AES cifra el mensaje. El modo automático elige un algoritmo compatible.'))
-        v.addWidget(label('La contraseña protege el mensaje simétrico o desbloquea la clave privada. Para cifrar y firmar en una sola operación se usa la misma contraseña para ambos.'))
+        v.addWidget(label('La contraseña protege el mensaje simétrico o desbloquea la clave privada al firmar. Para cifrar y firmar en una sola operación se usa la misma contraseña para ambos.'))
+        self.mode_changed()
         v.addWidget(button('Cifrar mensaje', lambda: self.message_action('encrypt'), True)); v.addStretch(); return w
     def decrypt_page(self):
         w=QWidget(); v=QVBoxLayout(w)
@@ -72,13 +74,15 @@ class Window(QMainWindow):
         self.key_list=QListWidget(); self.key_list.setMinimumHeight(120); v.addWidget(self.key_list)
         self.key_list.itemSelectionChanged.connect(self.update_key_rows)
         v.addWidget(button('Actualizar claves', self.refresh))
+        g=QGroupBox('Consultar keys.openpgp.org'); f=QFormLayout(g); self.lookup=QLineEdit(); self.lookup.setPlaceholderText('Correo electrónico o huella completa'); f.addRow('Buscar', self.lookup); f.addRow(label('Descarga la clave encontrada a la caja de importación. Verifica siempre su huella antes de confiar en ella.')); f.addRow(button('Buscar clave', self.search)); v.addWidget(g)
+        g=QGroupBox('Importar y exportar'); a=QVBoxLayout(g); self.key_text=textedit('Pega una clave en formato ASCII…'); a.addWidget(self.key_text); h=QHBoxLayout(); h.addWidget(button('Abrir archivo…', lambda: self.load_file(self.key_text))); h.addWidget(button('Importar clave', self.import_key)); a.addLayout(h); self.export_key=QComboBox(); a.addWidget(self.export_key); a.addWidget(button('Exportar clave pública', self.export)); v.addWidget(g); v.addStretch(); return w
+    def generate_page(self):
+        w=QWidget(); v=QVBoxLayout(w)
         g=QGroupBox('Crear un par de claves'); f=QFormLayout(g); self.name=QLineEdit(); self.email=QLineEdit(); self.key_pass=password(); self.key_algorithm=QComboBox(); self.expiry=QComboBox()
         for title, value in [('Predeterminado de GPG — recomendado', 'default'), ('RSA · 2048 bits', 'rsa2048'), ('RSA · 3072 bits', 'rsa3072'), ('RSA · 4096 bits', 'rsa4096')]: self.key_algorithm.addItem(title, value)
         for title, value in [('2 años', '2y'), ('1 año', '1y'), ('5 años', '5y'), ('Sin caducidad', '0')]: self.expiry.addItem(title, value)
         f.addRow('Nombre', self.name); f.addRow('Correo (opcional)', self.email); f.addRow('Contraseña', self.key_pass); f.addRow('Tipo y tamaño de clave', self.key_algorithm); f.addRow('Caducidad', self.expiry)
-        f.addRow(label('GPG crea el par y las subclaves que correspondan. La caducidad limita la validez de la clave; puede modificarse después con GPG.')); f.addRow(button('Crear claves', self.generate, True)); v.addWidget(g)
-        g=QGroupBox('Consultar keys.openpgp.org'); f=QFormLayout(g); self.lookup=QLineEdit(); self.lookup.setPlaceholderText('Correo electrónico o huella completa'); f.addRow('Buscar', self.lookup); f.addRow(label('Descarga la clave encontrada a la caja de importación. Verifica siempre su huella antes de confiar en ella.')); f.addRow(button('Buscar clave', self.search)); v.addWidget(g)
-        g=QGroupBox('Importar y exportar'); a=QVBoxLayout(g); self.key_text=textedit('Pega una clave en formato ASCII…'); a.addWidget(self.key_text); h=QHBoxLayout(); h.addWidget(button('Abrir archivo…', lambda: self.load_file(self.key_text))); h.addWidget(button('Importar clave', self.import_key)); a.addLayout(h); self.export_key=QComboBox(); a.addWidget(self.export_key); a.addWidget(button('Exportar clave pública', self.export)); v.addWidget(g); v.addStretch(); return w
+        f.addRow(label('GPG crea el par y las subclaves que correspondan. La caducidad limita la validez de la clave; puede modificarse después con GPG.')); f.addRow(button('Crear claves', self.generate, True)); v.addWidget(g); v.addStretch(); return w
     def hash_page(self):
         w=QWidget(); v=QVBoxLayout(w)
         v.addWidget(label('Calcula la huella digital de cualquier archivo y compárala con un valor conocido. El archivo se lee, pero no se modifica.'))
@@ -100,9 +104,9 @@ class Window(QMainWindow):
         lessons = [
             ('1. GPG y el llavero', 'GPG es la herramienta que realiza las operaciones. GePeGe prepara sus argumentos y muestra el comando en la consola.\n\nEl llavero guarda las claves del usuario. Una clave pública se puede compartir; la clave privada debe protegerse y mantenerse en secreto.'),
             ('2. Cifrado simétrico', 'Emisor y destinatario utilizan la misma contraseña.\n\nPráctica: en Cifrar elige «Simétrico», escribe un mensaje y una contraseña. Envía el resultado a Descifrar e introduce la misma contraseña. Comparte la contraseña por un canal diferente del mensaje.'),
-            ('3. Claves y cifrado asimétrico', 'Cada persona dispone de una clave pública y una privada. Para enviar un mensaje a otra persona se cifra con su clave pública; ella lo descifra con su clave privada.\n\nPráctica: crea una clave en Claves, exporta la parte pública y compártela. Importa la clave pública del destinatario, selecciónala en Cifrar y envíale el resultado. La clave privada nunca debe compartirse.'),
+            ('3. Claves y cifrado asimétrico', 'Cada persona dispone de una clave pública y una privada. Para enviar un mensaje a otra persona se cifra con su clave pública; ella lo descifra con su clave privada.\n\nPráctica: crea una clave en Generar claves y exporta la parte pública desde Almacén de claves. Importa allí la clave pública del destinatario, selecciónala en Cifrar y envíale el resultado. La clave privada nunca debe compartirse.'),
             ('4. Firma y verificación', 'Una firma se crea con la clave privada del firmante. GPG puede verificarla con la clave pública correspondiente y detectar si el mensaje ha cambiado.\n\nEn Cifrar, selecciona una clave en «Firmar con». Al descifrar, consulta el diagnóstico. Una firma válida vincula el mensaje a la clave; para conocer al propietario hay que verificar también su identidad.'),
-            ('5. Huella y confianza', 'La huella identifica una clave. Compárala con su propietario por un canal independiente antes de utilizarla.\n\nImportar una clave no garantiza que pertenezca a quien afirma ser. GPG puede rechazar el cifrado si no confía en ella; configura la confianza con GPG siguiendo las indicaciones del aula.'),
+            ('5. Huella y confianza', 'La huella identifica una clave. Compárala con su propietario por un canal independiente antes de utilizarla.\n\nImportar una clave no garantiza que pertenezca a quien afirma ser. Si GPG aún no confía plenamente en ella, GePeGe pedirá confirmar su huella para cada mensaje. Esta decisión no modifica la confianza guardada en el llavero.'),
             ('6. Hash e integridad de archivos', 'Un hash resume el contenido de un archivo. Calcula SHA-256 en la pestaña Hash y compara el resultado con uno obtenido de una fuente fiable.\n\nUna diferencia indica que los archivos no coinciden. Una coincidencia no demuestra quién publicó el hash. SHA-1 se incluye para prácticas antiguas, no para comprobaciones de seguridad nuevas.'),
             ('7. Errores y límites', 'Lee el diagnóstico y el comando mostrado: pueden indicar una contraseña incorrecta, una clave ausente o un problema de confianza.\n\nGePeGe cifra mensajes de texto UTF-8 y maneja claves ASCII. La pestaña Hash sí admite archivos binarios; esta versión no cifra archivos binarios arbitrarios.')]
         for title, description in lessons:
@@ -124,7 +128,9 @@ class Window(QMainWindow):
         if not result: return
         target = self.encrypt_message if tab == 0 else self.decrypt_message
         target.setPlainText(result); self.tabs.setCurrentIndex(tab)
-    def mode_changed(self): self.encrypt_form.setRowVisible(self.recipient, self.mode.currentData() == 'asymmetric')
+    def mode_changed(self):
+        self.encrypt_form.setRowVisible(self.recipient, self.mode.currentData() == 'asymmetric')
+        self.encrypt_form.setRowVisible(self.encrypt_pass, self.mode.currentData() == 'symmetric' or bool(self.signer.currentData()))
     def load_file(self, target):
         filename,_=QFileDialog.getOpenFileName(self, 'Abrir archivo de texto')
         if filename:
@@ -159,6 +165,11 @@ class Window(QMainWindow):
     def message_action(self, action):
         if action == 'encrypt':
             data = {'action':action, 'text':self.encrypt_message.toPlainText(), 'mode':self.mode.currentData(), 'recipient':self.recipient.currentData() or '', 'signer':self.signer.currentData() or '', 'cipher':self.cipher.currentData(), 'password':self.encrypt_pass.text()}
+            key = next ( (k for k in self.public if k['fingerprint'] == data['recipient']), None)
+            if data['mode'] == 'asymmetric' and key and key['validity'] not in ('f', 'u'):
+                message = f"GPG aún no confía plenamente en esta identidad:\n\n{key['uid'] or '(sin identidad)'}\nHuella: {key['fingerprint']}\n\nComprueba la huella con el destinatario por un canal independiente. ¿La has comprobado y quieres usar esta clave para este mensaje?"
+                if QMessageBox.question(self, 'Confirmar clave del destinatario', message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes: return
+                data['confirmed_recipient'] = True
             self.encrypt_pass.clear()
         else:
             data = {'action':action, 'text':self.decrypt_message.toPlainText(), 'password':self.decrypt_pass.text()}
@@ -167,7 +178,21 @@ class Window(QMainWindow):
     def generate(self):
         self.call({'action':'generate', 'name':self.name.text(), 'email':self.email.text(), 'password':self.key_pass.text(), 'algorithm':self.key_algorithm.currentData(), 'expiry':self.expiry.currentData()}, True); self.key_pass.clear()
     def import_key(self): self.call({'action':'import', 'text':self.key_text.toPlainText()}, True)
-    def export(self): self.call({'action':'export', 'key':self.export_key.currentData() or ''})
+    def export(self):
+        key = self.export_key.currentData() or ''
+        if not key: return self.show_result({'ok':False, 'detail':'Selecciona una clave pública.'})
+        filename, _ = QFileDialog.getSaveFileName(self, 'Exportar clave pública', 'clave-publica.asc', 'Clave OpenPGP ASCII (*.asc);;Todos los archivos (*)')
+        if not filename: return
+        def done(result):
+            if result.get('ok'):
+                try:
+                    if not result.get('output'): raise ValueError('GPG no devolvió ninguna clave pública.')
+                    Path(filename).write_text(result['output'], encoding='utf-8')
+                    result['detail'] = (result.get('detail', '') + f'\nClave pública guardada en: {filename}').strip()
+                except (OSError, ValueError) as exc:
+                    result.update(ok=False, detail=f'No se pudo guardar la clave: {exc}')
+            self.show_result(result)
+        self.start(lambda: execute({'action':'export', 'key':key}), done)
     def selected_key(self):
         item = self.key_list.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item and item.isSelected() else None
