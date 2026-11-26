@@ -31,14 +31,12 @@ def teaching_command(args):
 
 def gpg_executable():
     """Encuentra GnuPG en PATH o en las ubicaciones habituales de Windows."""
-    found = shutil.which('gpg')
-    if found: return found
     if sys.platform == 'win32':
         for root in (os.environ.get('ProgramFiles(x86)', ''), os.environ.get('ProgramFiles', '')):
             for folder in ('GnuPG/bin', 'Gpg4win/bin'):
                 candidate = os.path.join(root, folder, 'gpg.exe')
                 if root and os.path.isfile(candidate): return candidate
-    return 'gpg'
+    return shutil.which('gpg') or 'gpg'
 
 def run_gpg(args, data='', password=None, timeout=120, binary_output=False):
     command = [gpg_executable(), '--batch', '--yes', *args]

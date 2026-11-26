@@ -5,7 +5,7 @@ import tempfile
 import subprocess
 import unittest
 from unittest.mock import patch
-from gpg_backend import execute
+from gpg_backend import execute, gpg_executable
 
 class Integration(unittest.TestCase):
     def setUp(self):
@@ -25,7 +25,7 @@ class Integration(unittest.TestCase):
         self.assertRegex(result['fingerprint'], r'^[0-9A-F]{40}$')
 
     def test_binary_encrypted_message(self):
-        encrypted = subprocess.run(['gpg', '--batch', '--yes', '--pinentry-mode', 'loopback',
+        encrypted = subprocess.run([gpg_executable(), '--batch', '--yes', '--pinentry-mode', 'loopback',
                                     '--passphrase', 'prueba', '--symmetric'],
                                    input='Mensaje binario: ñ'.encode(), capture_output=True, check=True)
         result = execute({'action':'decrypt', 'encrypted_bytes':encrypted.stdout, 'password':'prueba'})
@@ -89,7 +89,7 @@ class Integration(unittest.TestCase):
         with self.assertRaises(ValueError): execute({'action':'import','text':''})
         with self.assertRaises(ValueError): execute({'action':'hash','filename':'archivo','expected':'incorrecto'})
     def test_hash_file_and_comparison(self):
-        filename = os.path.join(self.temp.name, 'archivo: prueba.bin')
+        filename = os.path.join(self.temp.name, 'archivo prueba.bin' if os.name == 'nt' else 'archivo: prueba.bin')
         data = b'\x00\xff\x80 contenido binario\n'
         with open(filename, 'wb') as f: f.write(data)
         expected = hashlib.sha256(data).hexdigest()

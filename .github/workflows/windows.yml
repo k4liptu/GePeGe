@@ -28,13 +28,14 @@ jobs:
       - name: Comprobar GnuPG
         shell: pwsh
         run: |
-          $gpg = Get-Command gpg -ErrorAction SilentlyContinue
-          if (-not $gpg) { choco install gnupg --yes --no-progress; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
-          $env:PATH += ';C:\Program Files (x86)\GnuPG\bin;C:\Program Files\GnuPG\bin'
-          gpg --version
+          choco install gnupg --yes --no-progress
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          "C:\Program Files (x86)\GnuPG\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "C:\Program Files\GnuPG\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $gpg = "${env:ProgramFiles(x86)}\GnuPG\bin\gpg.exe"
+          if (-not (Test-Path $gpg)) { $gpg = "$env:ProgramFiles\GnuPG\bin\gpg.exe" }
+          if (-not (Test-Path $gpg)) { throw 'No se encontró GnuPG nativo' }
+          & $gpg --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          (Split-Path $gpg) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Pruebas de integración
         run: python -m unittest discover -s tests -v
       - name: Comprobar interfaz
