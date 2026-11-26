@@ -1,0 +1,10 @@
+GePeGe 0.2b para Windows x86-64
+
+1. Extrae todos los archivos del ZIP en una carpeta.
+2. Instala Gpg4win desde https://www.gpg4win.org/download.html, o ejecuta
+   Instalar-Gpg4win.ps1 con PowerShell y confirma la instalación mediante winget.
+3. Abre la carpeta GePeGe y ejecuta GePeGe.exe.
+
+Gpg4win se instala por separado y usa el llavero de Windows del usuario.
+GePeGe no incluye Python ni necesita instalarlo. No se modifica el llavero
+existente, excepto al realizar las operaciones de claves solicitadas.

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """GePeGe: laboratorio visual de GnuPG para Linux."""
 import sys
+import json
+import re
 import ssl
 import urllib.error
 import urllib.parse
@@ -40,10 +42,51 @@ def fetch_key(query):
     except (OSError, UnicodeError, ValueError) as exc:
         return {'ok':False, 'detail':f'No se pudo obtener la clave: {exc}', 'command':'Consulta HTTPS a keys.openpgp.org (no se ejecuta GPG).'}
 
+def publish_key(fingerprint, email):
+    """Exporta únicamente la clave pública y solicita su publicación por HTTPS."""
+    result = execute({'action': 'export', 'key': fingerprint})
+    if not result.get('ok') or not result.get('output', '').startswith('-----BEGIN PGP PUBLIC KEY BLOCK-----') or 'PRIVATE KEY BLOCK' in result.get('output', ''):
+        return {'ok': False, 'detail': 'No se pudo exportar la clave pública. ' + result.get('detail', ''), 'command': result.get('command', '')}
+    def post(endpoint, body):
+        request = urllib.request.Request('https://keys.openpgp.org/vks/v1/' + endpoint,
+            data=json.dumps(body).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
+        with urllib.request.urlopen(request, timeout=15, context=https_context()) as response:
+            raw = response.read(1_000_001)
+        if len(raw) > 1_000_000: raise ValueError('La respuesta supera 1 MB.')
+        data = json.loads(raw.decode('utf-8'))
+        if not isinstance(data, dict): raise ValueError('Respuesta inesperada del servidor.')
+        return data
+    command = result['command'] + '\nHTTPS POST a keys.openpgp.org/vks/v1/upload'
+    uploaded = False
+    try:
+        response = post('upload', {'keytext': result['output']})
+        uploaded = True
+        if response.get('key_fpr', '').upper() != fingerprint.upper():
+            raise ValueError('El servidor devolvió una huella diferente o ausente.')
+        status = response.get('status')
+        if not isinstance(status, dict): raise ValueError('El servidor no indicó el estado de las direcciones.')
+        if email and status.get(email) == 'unpublished':
+            token = response.get('token')
+            if not isinstance(token, str) or not token: raise ValueError('El servidor no proporcionó un token de verificación.')
+            command += '\nHTTPS POST a keys.openpgp.org/vks/v1/request-verify'
+            response = post('request-verify', {'token': token, 'addresses': [email], 'locale': ['es']})
+            if response.get('key_fpr', '').upper() != fingerprint.upper() or not isinstance(response.get('status'), dict):
+                raise ValueError('Respuesta de verificación inesperada.')
+            status = response['status']
+        state = status.get(email) if email else None
+        if state == 'pending': detail = 'Clave pública subida. Revisa el correo y sigue el enlace de verificación para que se pueda encontrar por esa dirección.'
+        elif state == 'published': detail = 'Clave pública subida y dirección de correo publicada.'
+        elif not email: detail = 'Clave pública subida. Al no incluir correo, no se puede buscar por dirección de correo.'
+        else: detail = 'Clave pública subida. No se ha confirmado la publicación del correo; consulta su estado en keys.openpgp.org.'
+        return {'ok': True, 'detail': detail, 'command': command}
+    except (OSError, UnicodeError, ValueError, TypeError, AttributeError) as exc:
+        prefix = 'La clave pública podría haberse subido, pero no se completó la verificación.' if uploaded else 'No se pudo confirmar la subida de la clave pública.'
+        return {'ok': False, 'detail': f'{prefix} {exc}', 'command': command}
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__(); self.setWindowTitle('GePeGe — aprende GPG'); self.setWindowIcon(QIcon(str(APP_ICON))); self.resize(1150, 850)
-        self.pool = QThreadPool.globalInstance(); self.tasks = set(); self.public = []; self.secret = []; self.decrypt_bytes = None; self.encrypt_bytes = None; self.result_bytes = None
+        self.pool = QThreadPool.globalInstance(); self.tasks = set(); self.public = []; self.secret = []; self.decrypt_bytes = None; self.encrypt_bytes = None; self.result_bytes = None; self.generated_key = None
         root = QWidget(); self.setCentralWidget(root); layout = QVBoxLayout(root)
         title = QLabel('GePeGe   ·   Laboratorio de criptografía'); title.setStyleSheet('font-size: 22px; font-weight: bold; color: #193966;'); layout.addWidget(title)
         layout.addWidget(label('Practica con mensajes y claves. Cada operación muestra el comando de GPG y su diagnóstico.'))
@@ -70,7 +113,7 @@ class Window(QMainWindow):
         releases = QAction('Consultar actualizaciones…', self); releases.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/k4liptu/GePeGe/releases'))); help_menu.addAction(releases)
         about = QAction('Acerca de GePeGe', self); about.triggered.connect(self.about); help_menu.addAction(about)
     def about(self):
-        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.2a\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
+        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.2b\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
     def scroll(self, w):
         s = QScrollArea(); s.setWidgetResizable(True); s.setWidget(w); return s
     def encrypt_page(self):
@@ -109,7 +152,7 @@ class Window(QMainWindow):
         for title, value in [('Predeterminado de GPG — recomendado', 'default'), ('RSA · 2048 bits', 'rsa2048'), ('RSA · 3072 bits', 'rsa3072'), ('RSA · 4096 bits', 'rsa4096')]: self.key_algorithm.addItem(title, value)
         for title, value in [('2 años', '2y'), ('1 año', '1y'), ('5 años', '5y'), ('Sin caducidad', '0')]: self.expiry.addItem(title, value)
         f.addRow('Nombre', self.name); f.addRow('Correo (opcional)', self.email); f.addRow('Contraseña', self.key_pass); f.addRow('Tipo y tamaño de clave', self.key_algorithm); f.addRow('Caducidad', self.expiry)
-        f.addRow(label('GPG crea el par y las subclaves que correspondan. La caducidad limita la validez de la clave; puede modificarse después con GPG.')); f.addRow(button('Crear claves', self.generate, True)); v.addWidget(g); v.addStretch(); return w
+        f.addRow(label('GPG crea el par y las subclaves que correspondan. La caducidad limita la validez de la clave; puede modificarse después con GPG.')); f.addRow(button('Crear claves', self.generate, True)); self.publish_button=button('Subir clave pública a keys.openpgp.org…', self.publish_generated_key); self.publish_button.setEnabled(False); f.addRow(self.publish_button); v.addWidget(g); v.addStretch(); return w
     def hash_page(self):
         w=QWidget(); v=QVBoxLayout(w)
         v.addWidget(label('Calcula la huella digital de cualquier archivo y compárala con un valor conocido. El archivo se lee, pero no se modifica.'))
@@ -243,12 +286,23 @@ class Window(QMainWindow):
     def generate(self):
         data = {'action':'generate', 'name':self.name.text(), 'email':self.email.text(), 'password':self.key_pass.text(), 'algorithm':self.key_algorithm.currentData(), 'expiry':self.expiry.currentData()}
         self.key_pass.clear()
+        self.generated_key = None; self.publish_button.setEnabled(False)
         def done(result):
             self.show_result(result)
             if result.get('ok'):
+                if re.fullmatch(r'(?:[0-9A-F]{40}|[0-9A-F]{64})', result.get('fingerprint', '')):
+                    self.generated_key = (result['fingerprint'], data['email'].strip()); self.publish_button.setEnabled(True)
                 self.refresh(silent=True)
                 QMessageBox.information(self, 'Claves generadas', 'El par de claves se ha generado correctamente. Puedes consultarlo en «Almacén de claves».')
         self.start(lambda: execute(data), done)
+    def publish_generated_key(self):
+        if not self.generated_key: return
+        fingerprint, email = self.generated_key
+        message = (f'Se subirá únicamente la clave pública a keys.openpgp.org. La clave privada y su contraseña no se enviarán.\n\n'
+                   f'Huella: {fingerprint}\nCorreo: {email or "(sin correo)"}\n\n'
+                   'La clave pública podrá distribuirse públicamente. Si has indicado un correo, se solicitará un mensaje de verificación para que pueda encontrarse por esa dirección. ¿Quieres continuar?')
+        if QMessageBox.question(self, 'Publicar clave pública', message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes: return
+        self.start(lambda: publish_key(fingerprint, email))
     def import_key(self):
         data = {'action':'import', 'text':self.key_text.toPlainText()}
         def done(result):

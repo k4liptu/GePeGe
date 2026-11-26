@@ -4,6 +4,8 @@ import os
 import re
 import shlex
 import subprocess
+import shutil
+import sys
 
 def teaching_command(args):
     """Una variante interactiva de los argumentos, para practicar en terminal."""
@@ -27,12 +29,28 @@ def teaching_command(args):
         command += ' < mensaje.txt > mensaje-cifrado.' + ('asc' if '--armor' in args else 'gpg')
     return command
 
+def gpg_executable():
+    """Encuentra GnuPG en PATH o en las ubicaciones habituales de Windows."""
+    found = shutil.which('gpg')
+    if found: return found
+    if sys.platform == 'win32':
+        for root in (os.environ.get('ProgramFiles(x86)', ''), os.environ.get('ProgramFiles', '')):
+            for folder in ('GnuPG/bin', 'Gpg4win/bin'):
+                candidate = os.path.join(root, folder, 'gpg.exe')
+                if root and os.path.isfile(candidate): return candidate
+    return 'gpg'
+
 def run_gpg(args, data='', password=None, timeout=120, binary_output=False):
-    command = ['gpg', '--batch', '--yes', *args]
+    command = [gpg_executable(), '--batch', '--yes', *args]
     display = shlex.join(command)
     read_fd = write_fd = None
+    input_data = data if isinstance(data, bytes) else data.encode()
     try:
-        if password is not None:
+        if password is not None and sys.platform == 'win32':
+            command[1:1] = ['--pinentry-mode', 'loopback', '--passphrase-fd', '0']
+            input_data = (password + '\n').encode() + input_data
+            display = 'gpg --pinentry-mode loopback --passphrase-fd 0 ' + shlex.join(command[5:])
+        elif password is not None:
             read_fd, write_fd = os.pipe()
             os.write(write_fd, (password + '\n').encode())
             os.close(write_fd)
@@ -44,8 +62,9 @@ def run_gpg(args, data='', password=None, timeout=120, binary_output=False):
             env['LD_LIBRARY_PATH'] = env.pop('LD_LIBRARY_PATH_ORIG')
         elif getattr(__import__('sys'), 'frozen', False):
             env.pop('LD_LIBRARY_PATH', None)
-        result = subprocess.run(command, input=data if isinstance(data, bytes) else data.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                pass_fds=(read_fd,) if read_fd is not None else (), timeout=timeout, env=env)
+        options = {'creationflags': subprocess.CREATE_NO_WINDOW} if sys.platform == 'win32' else {'pass_fds': (read_fd,) if read_fd is not None else ()}
+        result = subprocess.run(command, input=input_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                timeout=timeout, env=env, **options)
         output_bytes = result.stdout
         try: output = output_bytes.decode('utf-8') if not binary_output and b'\x00' not in output_bytes else ''
         except UnicodeDecodeError: output = ''
@@ -134,18 +153,20 @@ def execute(payload):
         if algorithm not in ('default', 'rsa2048', 'rsa3072', 'rsa4096'): raise ValueError('Algoritmo de clave no válido.')
         if expiry not in ('0', '1y', '2y', '5y'): raise ValueError('Caducidad no válida.')
         uid = f'{name} <{email}>' if email else name
-        if algorithm == 'default':
-            return run_gpg(['--quick-generate-key', uid, algorithm, 'default', expiry], password=password)
-        primary = run_gpg(['--status-fd', '2', '--quick-generate-key', uid, algorithm, 'cert,sign', expiry], password=password)
+        usage = 'default' if algorithm == 'default' else 'cert,sign'
+        primary = run_gpg(['--status-fd', '2', '--quick-generate-key', uid, algorithm, usage, expiry], password=password)
         if not primary['ok']: return primary
         match = re.search(r'^\[GNUPG:\] KEY_CREATED [A-Z] ([0-9A-F]+)$', primary['detail'], re.MULTILINE)
         if not match:
             primary.update(ok=False, detail=primary['detail'] + '\nLa clave se creó, pero no se pudo identificar para añadir la subclave de cifrado.')
             return primary
+        primary['fingerprint'] = match.group(1)
+        if algorithm == 'default': return primary
         subkey = run_gpg(['--quick-add-key', match.group(1), algorithm, 'encrypt', expiry], password=password)
         subkey['command'] = primary['command'] + '\n' + subkey['command']
         subkey['teaching'] = primary['teaching'] + '\n' + subkey['teaching']
         subkey['detail'] = primary['detail'] + '\n' + subkey['detail']
+        if subkey['ok']: subkey['fingerprint'] = match.group(1)
         if not subkey['ok']: subkey['detail'] += '\nLa clave principal se creó, pero no se pudo añadir la subclave de cifrado.'
         return subkey
     if action == 'hash':

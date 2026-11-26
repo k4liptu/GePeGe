@@ -1,0 +1,61 @@
+name: Compilar GePeGe para Windows
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app.py'
+      - 'gepege_ui.py'
+      - 'gpg_backend.py'
+      - 'requirements*.txt'
+      - 'tests/**'
+      - 'packaging/windows/**'
+      - '.github/workflows/windows.yml'
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements-build.txt
+      - name: Comprobar GnuPG
+        shell: pwsh
+        run: |
+          $gpg = Get-Command gpg -ErrorAction SilentlyContinue
+          if (-not $gpg) { choco install gnupg --yes --no-progress; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          $env:PATH += ';C:\Program Files (x86)\GnuPG\bin;C:\Program Files\GnuPG\bin'
+          gpg --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "C:\Program Files (x86)\GnuPG\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\Program Files\GnuPG\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Pruebas de integración
+        run: python -m unittest discover -s tests -v
+      - name: Comprobar interfaz
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -c "from unittest.mock import patch; from PySide6.QtWidgets import QApplication; from app import Window; a=QApplication([]); p=patch.object(Window, 'refresh'); p.start(); w=Window(); w.show(); a.processEvents(); assert w.tabs.count()==6; p.stop()"
+      - name: Crear aplicación
+        run: python -m PyInstaller --noconfirm --clean --windowed --name GePeGe --add-data "packaging/GePeGe.svg;packaging" --add-data "LICENSE;." app.py
+      - name: Empaquetar
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item -Recurse dist/GePeGe release/GePeGe
+          Copy-Item packaging/windows/Instalar-Gpg4win.ps1,packaging/windows/LEEME.txt release/
+          Compress-Archive -Path release/* -DestinationPath GePeGe-0.2b-Windows-x86_64.zip
+          $hash = (Get-FileHash GePeGe-0.2b-Windows-x86_64.zip -Algorithm SHA256).Hash.ToLower()
+          [IO.File]::WriteAllText("$pwd/GePeGe-0.2b-Windows-x86_64.zip.sha256", "$hash  GePeGe-0.2b-Windows-x86_64.zip`n")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GePeGe-0.2b-Windows-x86_64
+          path: |
+            GePeGe-0.2b-Windows-x86_64.zip
+            GePeGe-0.2b-Windows-x86_64.zip.sha256
+          if-no-files-found: error

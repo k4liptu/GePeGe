@@ -19,6 +19,11 @@ class Integration(unittest.TestCase):
         self.assertIn('--symmetric', encrypted['teaching']); self.assertIn('> mensaje-cifrado.asc', encrypted['teaching'])
         decrypted = execute({'action':'decrypt','text':encrypted['output'],'password':'secreto-prueba'})
         self.assertTrue(decrypted['ok'], decrypted['detail']); self.assertEqual(decrypted['output'], 'Hola, clase: ñ')
+    def test_default_generation_returns_fingerprint(self):
+        result = execute({'action':'generate', 'name':'Prueba defecto', 'password':'clave-prueba'})
+        self.assertTrue(result['ok'], result['detail'])
+        self.assertRegex(result['fingerprint'], r'^[0-9A-F]{40}$')
+
     def test_binary_encrypted_message(self):
         encrypted = subprocess.run(['gpg', '--batch', '--yes', '--pinentry-mode', 'loopback',
                                     '--passphrase', 'prueba', '--symmetric'],
@@ -41,6 +46,7 @@ class Integration(unittest.TestCase):
     def test_generate_export_import_encrypt_sign_decrypt(self):
         generated = execute({'action':'generate','name':'Prueba Alumno','email':'alumno@example.org','password':'clave-prueba','algorithm':'rsa2048','expiry':'1y'})
         self.assertTrue(generated['ok'], generated['detail'])
+        self.assertRegex(generated['fingerprint'], r'^[0-9A-F]{40}$')
         self.assertIn('rsa2048', generated['command']); self.assertIn('1y', generated['command'])
         self.assertIn('--quick-generate-key', generated['teaching']); self.assertIn('--quick-add-key', generated['teaching']); self.assertNotIn('--status-fd', generated['teaching'])
         keys=execute({'action':'keys'}); self.assertEqual(len(keys['keys']),1); key=keys['keys'][0]['fingerprint']

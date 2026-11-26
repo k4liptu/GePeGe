@@ -12,7 +12,7 @@ La consola muestra primero un ejemplo didáctico para la terminal y después el 
 
 - Cifrar y descifrar mensajes de texto con contraseña o claves públicas/privadas.
 - Firmar al cifrar, seleccionando una clave privada; al descifrar, GPG muestra el resultado de la verificación en el diagnóstico.
-- Crear pares de claves, consultar el llavero, importar claves y exportar claves públicas en ASCII.
+- Crear pares de claves, consultar el llavero, importar claves y exportar claves públicas en ASCII. La clave pública recién generada también se puede subir voluntariamente a keys.openpgp.org tras confirmar su huella.
 - Consultar información de una clave seleccionada y borrarla tras dos confirmaciones. Si existe su clave privada, se borran tanto la privada como la pública y sus subclaves.
 - Consultar por correo o huella completa en keys.openpgp.org directamente desde la aplicación y después importar el resultado.
 - Importar textos y archivos binarios, cifrar en formato ASCII o binario `.gpg` y guardar los resultados; importar claves ASCII.
@@ -41,7 +41,7 @@ La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se d
 
 ## Uso en clase
 
-1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada con el botón de su fila en **Almacén de claves**.
+1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada con el botón de su fila en **Almacén de claves**. También puedes subir la clave pública recién creada a keys.openpgp.org desde esa pestaña. Si incluyes correo, recibirás un enlace para verificarlo y permitir búsquedas por dirección. La publicación es voluntaria y la clave privada nunca se envía.
 2. Importa la clave pública de otro alumno y verifica su huella por otro canal.
 3. En **Cifrar**, escribe el texto, selecciona cifrado asimétrico y el destinatario. Opcionalmente, selecciona tu clave para firmar.
 4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo. También puede importar mensajes OpenPGP binarios, incluidos archivos `.gpg`, `.pgp` o `.txt`; los resultados binarios descifrados se guardan en un archivo.
@@ -92,8 +92,14 @@ Para la versión de prueba se utilizó Ubuntu 22.04 en un contenedor con `packag
 
 ## Estado
 
-Versión 0.2a. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
+Versión 0.2b. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
 
 ## Licencia
 
 El código propio de GePeGe se distribuye bajo la [GNU General Public License, versión 3](LICENSE) (GPL-3.0-only). Las dependencias tienen sus propias licencias; consulta [DEPENDENCIAS.md](DEPENDENCIAS.md) antes de distribuir el AppImage.
+
+## Windows
+
+Descarga el ZIP de Windows x86-64 desde Releases y extrae todo su contenido. Instala [Gpg4win](https://www.gpg4win.org/download.html) por separado, o ejecuta `Instalar-Gpg4win.ps1` con PowerShell y confirma la instalación mediante winget. Abre `GePeGe/GePeGe.exe`. No se necesita instalar Python. GePeGe utiliza el llavero GnuPG del usuario y detecta GPG en PATH o en las ubicaciones habituales de Gpg4win.
+
+El paquete de Windows se compila y prueba en GitHub Actions con `.github/workflows/windows.yml`. No se incluye GnuPG en el ZIP: su instalación y actualización son independientes.
