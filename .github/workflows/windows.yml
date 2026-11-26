@@ -28,8 +28,9 @@ jobs:
       - name: Comprobar GnuPG
         shell: pwsh
         run: |
-          choco install gnupg --yes --no-progress
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Invoke-WebRequest -Uri 'https://gnupg.org/ftp/gcrypt/binary/gnupg-w32-2.5.24_20260923.exe' -OutFile "$env:RUNNER_TEMP/gnupg-installer.exe"
+          $installer = Start-Process -FilePath "$env:RUNNER_TEMP/gnupg-installer.exe" -ArgumentList '/S' -Wait -PassThru
+          if ($installer.ExitCode -ne 0) { throw "El instalador de GnuPG terminó con código $($installer.ExitCode)" }
           $gpg = "${env:ProgramFiles(x86)}\GnuPG\bin\gpg.exe"
           if (-not (Test-Path $gpg)) { $gpg = "$env:ProgramFiles\GnuPG\bin\gpg.exe" }
           if (-not (Test-Path $gpg)) { throw 'No se encontró GnuPG nativo' }
