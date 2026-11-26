@@ -15,7 +15,7 @@ La consola muestra primero un ejemplo didáctico para la terminal y después el 
 - Crear pares de claves, consultar el llavero, importar claves y exportar claves públicas en ASCII.
 - Consultar información de una clave seleccionada y borrarla tras dos confirmaciones. Si existe su clave privada, se borran tanto la privada como la pública y sus subclaves.
 - Consultar por correo o huella completa en keys.openpgp.org directamente desde la aplicación y después importar el resultado.
-- Importar mensajes y claves desde archivos de texto, copiar y guardar resultados.
+- Importar textos y archivos binarios, cifrar en formato ASCII o binario `.gpg` y guardar los resultados; importar claves ASCII.
 - Elegir el tipo y tamaño de las claves RSA y su caducidad; seleccionar el algoritmo de cifrado del mensaje o dejarlo en automático.
 - Calcular y comparar hashes SHA-256, SHA-512 o SHA-1 de cualquier archivo. SHA-1 se incluye únicamente para prácticas con sistemas antiguos.
 
@@ -44,14 +44,14 @@ La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se d
 1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada con el botón de su fila en **Almacén de claves**.
 2. Importa la clave pública de otro alumno y verifica su huella por otro canal.
 3. En **Cifrar**, escribe el texto, selecciona cifrado asimétrico y el destinatario. Opcionalmente, selecciona tu clave para firmar.
-4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo.
+4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo. También puede importar mensajes OpenPGP binarios, incluidos archivos `.gpg`, `.pgp` o `.txt`; los resultados binarios descifrados se guardan en un archivo.
 5. Para practicar cifrado simétrico, selecciona esa opción y comparte la contraseña por un canal seguro diferente.
 
 GPG puede rechazar claves públicas importadas si aún no confía en ellas. Comprueba la huella con el destinatario por un canal independiente; GePeGe permite confirmar su uso para ese mensaje sin modificar la confianza del llavero. Una firma válida acredita su relación con una clave, pero no verifica por sí sola la identidad de su propietario.
 
 ## Limitaciones de esta primera versión
 
-Se admiten mensajes UTF-8 y claves ASCII, no archivos binarios arbitrarios. El cifrado asimétrico usa la confianza de GPG o, previa confirmación para ese mensaje, permite usar una clave sin confianza plena. GPG sigue rechazando claves no aptas para cifrar. Al cifrar simétricamente y firmar a la vez se utiliza la misma contraseña para ambas operaciones. Los mensajes y las contraseñas se mantienen temporalmente en memoria durante la operación; no se guardan deliberadamente en archivos de la aplicación. Se exportan claves públicas, no privadas, mediante un diálogo para elegir el destino. La búsqueda depende de la disponibilidad y las políticas de publicación del servidor.
+Se admiten mensajes UTF-8, archivos binarios y claves ASCII. El cifrado asimétrico usa la confianza de GPG o, previa confirmación para ese mensaje, permite usar una clave sin confianza plena. GPG sigue rechazando claves no aptas para cifrar. Al cifrar simétricamente y firmar a la vez se utiliza la misma contraseña para ambas operaciones. Los mensajes y las contraseñas se mantienen temporalmente en memoria durante la operación; no se guardan deliberadamente en archivos de la aplicación. Se exportan claves públicas, no privadas, mediante un diálogo para elegir el destino. La búsqueda depende de la disponibilidad y las políticas de publicación del servidor.
 
 ## Pruebas
 
@@ -92,7 +92,7 @@ Para la versión de prueba se utilizó Ubuntu 22.04 en un contenedor con `packag
 
 ## Estado
 
-Versión 0.2. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
+Versión 0.2a. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
 
 ## Licencia
 

@@ -43,7 +43,7 @@ def fetch_key(query):
 class Window(QMainWindow):
     def __init__(self):
         super().__init__(); self.setWindowTitle('GePeGe — aprende GPG'); self.setWindowIcon(QIcon(str(APP_ICON))); self.resize(1150, 850)
-        self.pool = QThreadPool.globalInstance(); self.tasks = set(); self.public = []; self.secret = []
+        self.pool = QThreadPool.globalInstance(); self.tasks = set(); self.public = []; self.secret = []; self.decrypt_bytes = None; self.encrypt_bytes = None; self.result_bytes = None
         root = QWidget(); self.setCentralWidget(root); layout = QVBoxLayout(root)
         title = QLabel('GePeGe   ·   Laboratorio de criptografía'); title.setStyleSheet('font-size: 22px; font-weight: bold; color: #193966;'); layout.addWidget(title)
         layout.addWidget(label('Practica con mensajes y claves. Cada operación muestra el comando de GPG y su diagnóstico.'))
@@ -70,18 +70,19 @@ class Window(QMainWindow):
         releases = QAction('Consultar actualizaciones…', self); releases.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/k4liptu/GePeGe/releases'))); help_menu.addAction(releases)
         about = QAction('Acerca de GePeGe', self); about.triggered.connect(self.about); help_menu.addAction(about)
     def about(self):
-        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.2\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
+        QMessageBox.about(self, 'Acerca de GePeGe', 'GePeGe · versión 0.2a\nRGP 2026\n\nUna aplicación educativa de escritorio para aprender a utilizar GnuPG.\n\nLas operaciones criptográficas las realiza GPG; consulta la consola para ver los comandos y resultados.')
     def scroll(self, w):
         s = QScrollArea(); s.setWidgetResizable(True); s.setWidget(w); return s
     def encrypt_page(self):
         w=QWidget(); v=QVBoxLayout(w)
         v.addWidget(label('Escribe o importa el texto que quieres proteger y elige el tipo de cifrado.'))
-        self.encrypt_message=textedit('Escribe aquí el mensaje que quieres cifrar…', 170); v.addWidget(self.encrypt_message)
-        h=QHBoxLayout(); h.addWidget(button('Importar mensaje…', lambda: self.load_file(self.encrypt_message))); h.addWidget(button('Limpiar', self.encrypt_message.clear)); v.addLayout(h)
-        self.encrypt_form=QFormLayout(); self.mode=QComboBox(); self.mode.addItem('Asimétrico — clave pública', 'asymmetric'); self.mode.addItem('Simétrico — contraseña', 'symmetric'); self.mode.currentIndexChanged.connect(self.mode_changed)
+        self.encrypt_message=textedit('Escribe aquí el mensaje que quieres cifrar…', 170); self.encrypt_message.textChanged.connect(self.clear_encrypt_file); v.addWidget(self.encrypt_message)
+        self.encrypt_file_label=label(''); v.addWidget(self.encrypt_file_label)
+        h=QHBoxLayout(); h.addWidget(button('Importar mensaje…', self.load_plain_file)); h.addWidget(button('Limpiar', self.clear_encrypt_input)); v.addLayout(h)
+        self.encrypt_form=QFormLayout(); self.format=QComboBox(); self.format.addItem('Texto ASCII (.asc)', 'asc'); self.format.addItem('Archivo binario (.gpg)', 'gpg'); self.mode=QComboBox(); self.mode.addItem('Asimétrico — clave pública', 'asymmetric'); self.mode.addItem('Simétrico — contraseña', 'symmetric'); self.mode.currentIndexChanged.connect(self.mode_changed)
         self.recipient=QComboBox(); self.signer=QComboBox(); self.signer.currentIndexChanged.connect(self.mode_changed); self.encrypt_pass=password(); self.cipher=QComboBox()
         for title, value in [('Automático — recomendado', 'default'), ('AES-128', 'AES128'), ('AES-256', 'AES256')]: self.cipher.addItem(title, value)
-        self.encrypt_form.addRow('Tipo de cifrado', self.mode); self.encrypt_form.addRow('Clave del destinatario', self.recipient); self.encrypt_form.addRow('Algoritmo del mensaje', self.cipher); self.encrypt_form.addRow('Firmar con (opcional)', self.signer); self.encrypt_form.addRow('Contraseña', self.encrypt_pass); v.addLayout(self.encrypt_form)
+        self.encrypt_form.addRow('Formato de salida', self.format); self.encrypt_form.addRow('Tipo de cifrado', self.mode); self.encrypt_form.addRow('Clave del destinatario', self.recipient); self.encrypt_form.addRow('Algoritmo del mensaje', self.cipher); self.encrypt_form.addRow('Firmar con (opcional)', self.signer); self.encrypt_form.addRow('Contraseña', self.encrypt_pass); v.addLayout(self.encrypt_form)
         v.addWidget(label('En el cifrado asimétrico, la clave del destinatario protege una clave de sesión; AES cifra el mensaje. El modo automático elige un algoritmo compatible.'))
         v.addWidget(label('La contraseña protege el mensaje simétrico o desbloquea la clave privada al firmar. Para cifrar y firmar en una sola operación se usa la misma contraseña para ambos.'))
         self.mode_changed()
@@ -89,8 +90,9 @@ class Window(QMainWindow):
     def decrypt_page(self):
         w=QWidget(); v=QVBoxLayout(w)
         v.addWidget(label('Pega o importa el mensaje cifrado. GPG detectará cómo se cifró y, si tiene firma, intentará verificarla.'))
-        self.decrypt_message=textedit('Pega aquí el mensaje cifrado…', 170); v.addWidget(self.decrypt_message)
-        h=QHBoxLayout(); h.addWidget(button('Importar mensaje cifrado…', lambda: self.load_file(self.decrypt_message))); h.addWidget(button('Limpiar', self.decrypt_message.clear)); v.addLayout(h)
+        self.decrypt_message=textedit('Pega aquí el mensaje cifrado…', 170); self.decrypt_message.textChanged.connect(self.clear_decrypt_file); v.addWidget(self.decrypt_message)
+        self.decrypt_file_label=label(''); v.addWidget(self.decrypt_file_label)
+        h=QHBoxLayout(); h.addWidget(button('Importar mensaje cifrado…', self.load_encrypted_file)); h.addWidget(button('Limpiar', self.clear_decrypt_input)); v.addLayout(h)
         form=QFormLayout(); self.decrypt_pass=password(); form.addRow('Contraseña', self.decrypt_pass); v.addLayout(form)
         v.addWidget(label('Introduce la contraseña del mensaje simétrico o la de tu clave privada. Consulta el diagnóstico para comprobar la firma.'))
         v.addWidget(button('Descifrar mensaje', lambda: self.message_action('decrypt'), True)); v.addStretch(); return w
@@ -133,7 +135,7 @@ class Window(QMainWindow):
             ('4. Firma y verificación', 'Una firma se crea con la clave privada del firmante. GPG puede verificarla con la clave pública correspondiente y detectar si el mensaje ha cambiado.\n\nEn Cifrar, selecciona una clave en «Firmar con». Al descifrar, consulta el diagnóstico. Una firma válida vincula el mensaje a la clave; para conocer al propietario hay que verificar también su identidad.'),
             ('5. Huella y confianza', 'La huella identifica una clave. Compárala con su propietario por un canal independiente antes de utilizarla.\n\nImportar una clave no garantiza que pertenezca a quien afirma ser. Si GPG aún no confía plenamente en ella, GePeGe pedirá confirmar su huella para cada mensaje. Esta decisión no modifica la confianza guardada en el llavero.'),
             ('6. Hash e integridad de archivos', 'Un hash resume el contenido de un archivo. Calcula SHA-256 en la pestaña Hash y compara el resultado con uno obtenido de una fuente fiable.\n\nUna diferencia indica que los archivos no coinciden. Una coincidencia no demuestra quién publicó el hash. SHA-1 se incluye para prácticas antiguas, no para comprobaciones de seguridad nuevas.'),
-            ('7. Errores y límites', 'Lee el diagnóstico y el comando mostrado: pueden indicar una contraseña incorrecta, una clave ausente o un problema de confianza.\n\nGePeGe cifra mensajes de texto UTF-8 y maneja claves ASCII. La pestaña Hash sí admite archivos binarios; esta versión no cifra archivos binarios arbitrarios.')]
+            ('7. Errores y límites', 'Lee el diagnóstico y el comando mostrado: pueden indicar una contraseña incorrecta, una clave ausente o un problema de confianza.\n\nGePeGe cifra textos y archivos binarios, y maneja claves ASCII. Los resultados binarios se guardan en un archivo.')]
         for title, description in lessons:
             header=QToolButton(); header.setObjectName('lessonHeader'); header.setText(title); header.setCheckable(True); header.setArrowType(Qt.ArrowType.RightArrow); header.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon); header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             content=label(description); content.setContentsMargins(16, 8, 12, 14); content.hide()
@@ -156,16 +158,50 @@ class Window(QMainWindow):
     def mode_changed(self):
         self.encrypt_form.setRowVisible(self.recipient, self.mode.currentData() == 'asymmetric')
         self.encrypt_form.setRowVisible(self.encrypt_pass, self.mode.currentData() == 'symmetric' or bool(self.signer.currentData()))
+    def clear_encrypt_file(self):
+        self.encrypt_bytes = None
+        if hasattr(self, 'encrypt_file_label'): self.encrypt_file_label.setText('')
+    def clear_encrypt_input(self):
+        self.encrypt_message.clear()
+        self.clear_encrypt_file()
+    def load_plain_file(self):
+        filename,_=QFileDialog.getOpenFileName(self, 'Abrir archivo para cifrar')
+        if filename:
+            try:
+                data = Path(filename).read_bytes()
+                if not data: raise ValueError('El archivo está vacío.')
+                self.encrypt_message.clear()
+                self.encrypt_bytes = data
+                self.encrypt_file_label.setText('Archivo seleccionado: ' + filename)
+            except (OSError, ValueError) as exc: QMessageBox.warning(self, 'No se pudo abrir', str(exc))
+    def clear_decrypt_input(self):
+        self.decrypt_message.clear()
+        self.clear_decrypt_file()
+    def clear_decrypt_file(self):
+        self.decrypt_bytes = None
+        if hasattr(self, 'decrypt_file_label'): self.decrypt_file_label.setText('')
+    def load_encrypted_file(self):
+        filename,_=QFileDialog.getOpenFileName(self, 'Abrir mensaje cifrado', '', 'Mensajes OpenPGP (*.gpg *.pgp *.asc *.txt);;Todos los archivos (*)')
+        if filename:
+            try:
+                data = Path(filename).read_bytes()
+                if not data: raise ValueError('El archivo está vacío.')
+                self.decrypt_message.clear()
+                self.decrypt_bytes = data
+                self.decrypt_file_label.setText('Archivo seleccionado: ' + filename)
+            except (OSError, ValueError) as exc: QMessageBox.warning(self, 'No se pudo abrir', str(exc))
     def load_file(self, target):
         filename,_=QFileDialog.getOpenFileName(self, 'Abrir archivo de texto')
         if filename:
             try: target.setPlainText(Path(filename).read_text(encoding='utf-8'))
             except (OSError, UnicodeError) as exc: QMessageBox.warning(self, 'No se pudo abrir', f'Selecciona un archivo de texto UTF-8.\n{exc}')
     def save(self):
-        if not self.output.toPlainText(): return
-        filename,_=QFileDialog.getSaveFileName(self, 'Guardar resultado', 'resultado.asc')
+        if self.result_bytes is None and not self.output.toPlainText(): return
+        filename,_=QFileDialog.getSaveFileName(self, 'Guardar resultado', 'resultado.gpg' if self.result_bytes is not None else 'resultado.asc')
         if filename:
-            try: Path(filename).write_text(self.output.toPlainText(), encoding='utf-8')
+            try:
+                if self.result_bytes is not None: Path(filename).write_bytes(self.result_bytes)
+                else: Path(filename).write_text(self.output.toPlainText(), encoding='utf-8')
             except OSError as exc: QMessageBox.warning(self, 'No se pudo guardar', str(exc))
     def start(self, fn, callback=None):
         self.status.setText('Operación en curso…'); task=Task(fn); self.tasks.add(task)
@@ -181,7 +217,9 @@ class Window(QMainWindow):
             command = 'EJEMPLO PARA LA TERMINAL\n' + result['teaching'] + '\n\nLos archivos de entrada deben existir; los de salida son ejemplos y pueden sobrescribirse. GPG puede solicitar la contraseña de forma interactiva.\n\nEJECUCIÓN REAL EN GEPEGE\n' + command
         self.command.setPlainText(command)
         self.detail.setPlainText(result.get('detail') or ('Sin mensajes de diagnóstico.' if result.get('ok') else 'Revisa los datos introducidos.'))
-        self.output.setPlainText(result.get('output', ''))
+        self.result_bytes = result.get('output_bytes') if result.get('ok') else None
+        self.output.setPlainText(result.get('output', '') if self.result_bytes is None else '')
+        if self.result_bytes is not None: self.detail.append('Resultado binario: pulsa «Guardar resultado…» para guardarlo.')
     def call(self, data, refresh=False):
         def done(r):
             self.show_result(r)
@@ -189,7 +227,8 @@ class Window(QMainWindow):
         self.start(lambda: execute(data), done)
     def message_action(self, action):
         if action == 'encrypt':
-            data = {'action':action, 'text':self.encrypt_message.toPlainText(), 'mode':self.mode.currentData(), 'recipient':self.recipient.currentData() or '', 'signer':self.signer.currentData() or '', 'cipher':self.cipher.currentData(), 'password':self.encrypt_pass.text()}
+            data = {'action':action, 'text':self.encrypt_message.toPlainText(), 'mode':self.mode.currentData(), 'recipient':self.recipient.currentData() or '', 'signer':self.signer.currentData() or '', 'cipher':self.cipher.currentData(), 'password':self.encrypt_pass.text(), 'format':self.format.currentData()}
+            if self.encrypt_bytes is not None: data['content_bytes'] = self.encrypt_bytes
             key = next ( (k for k in self.public if k['fingerprint'] == data['recipient']), None)
             if data['mode'] == 'asymmetric' and key and key['validity'] not in ('f', 'u'):
                 message = f"GPG aún no confía plenamente en esta identidad:\n\n{key['uid'] or '(sin identidad)'}\nHuella: {key['fingerprint']}\n\nComprueba la huella con el destinatario por un canal independiente. ¿La has comprobado y quieres usar esta clave para este mensaje?"
@@ -198,6 +237,7 @@ class Window(QMainWindow):
             self.encrypt_pass.clear()
         else:
             data = {'action':action, 'text':self.decrypt_message.toPlainText(), 'password':self.decrypt_pass.text()}
+            if self.decrypt_bytes is not None: data['encrypted_bytes'] = self.decrypt_bytes
             self.decrypt_pass.clear()
         self.call(data)
     def generate(self):

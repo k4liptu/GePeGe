@@ -24,10 +24,10 @@ def teaching_command(args):
     elif '--decrypt' in args:
         command += ' < mensaje-cifrado.asc > mensaje-descifrado.txt'
     elif '--encrypt' in args or '--symmetric' in args:
-        command += ' < mensaje.txt > mensaje-cifrado.asc'
+        command += ' < mensaje.txt > mensaje-cifrado.' + ('asc' if '--armor' in args else 'gpg')
     return command
 
-def run_gpg(args, data='', password=None, timeout=120):
+def run_gpg(args, data='', password=None, timeout=120, binary_output=False):
     command = ['gpg', '--batch', '--yes', *args]
     display = shlex.join(command)
     read_fd = write_fd = None
@@ -44,9 +44,13 @@ def run_gpg(args, data='', password=None, timeout=120):
             env['LD_LIBRARY_PATH'] = env.pop('LD_LIBRARY_PATH_ORIG')
         elif getattr(__import__('sys'), 'frozen', False):
             env.pop('LD_LIBRARY_PATH', None)
-        result = subprocess.run(command, input=data.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        result = subprocess.run(command, input=data if isinstance(data, bytes) else data.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 pass_fds=(read_fd,) if read_fd is not None else (), timeout=timeout, env=env)
-        return {'ok': result.returncode == 0, 'output': result.stdout.decode('utf-8', 'replace'),
+        output_bytes = result.stdout
+        try: output = output_bytes.decode('utf-8') if not binary_output and b'\x00' not in output_bytes else ''
+        except UnicodeDecodeError: output = ''
+        return {'ok': result.returncode == 0, 'output': output,
+                'output_bytes': output_bytes if binary_output or (output_bytes and not output) else None,
                 'detail': result.stderr.decode('utf-8', 'replace'), 'command': display, 'teaching': teaching_command(args)}
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {'ok': False, 'output': '', 'detail': str(exc), 'command': display, 'teaching': teaching_command(args)}
@@ -96,11 +100,13 @@ def execute(payload):
         result['teaching'] = secret_keys['teaching'] + '\n' + result['teaching']
         return result
     if action == 'encrypt':
-        if not text: raise ValueError('Escribe o importa un mensaje.')
+        content = payload.get('content_bytes', text)
+        if not content: raise ValueError('Escribe o importa un mensaje.')
         mode = value('mode')
         cipher = value('cipher') or 'default'
         if cipher not in ('default', 'AES128', 'AES256'): raise ValueError('Algoritmo de cifrado no válido.')
-        args = ['--armor']
+        binary_output = payload.get('format') == 'gpg'
+        args = [] if binary_output else ['--armor']
         if cipher != 'default': args += ['--cipher-algo', cipher]
         if mode == 'symmetric':
             if not password: raise ValueError('Introduce una contraseña para cifrar.')
@@ -113,10 +119,11 @@ def execute(payload):
         else: raise ValueError('Selecciona un modo de cifrado válido.')
         if value('signer'):
             args += ['--local-user', value('signer'), '--sign']
-        return run_gpg(args, text, password if mode == 'symmetric' or value('signer') else None)
+        return run_gpg(args, content, password if mode == 'symmetric' or value('signer') else None, binary_output=binary_output)
     if action == 'decrypt':
-        if not text: raise ValueError('Pega o importa el mensaje cifrado.')
-        return run_gpg(['--decrypt'], text, password)
+        encrypted = payload.get('encrypted_bytes', text)
+        if not encrypted: raise ValueError('Pega o importa el mensaje cifrado.')
+        return run_gpg(['--decrypt'], encrypted, password)
     if action == 'generate':
         name, email = value('name'), value('email')
         if not name or any(c in name + email for c in '\r\n<>'): raise ValueError('Introduce un nombre válido y un correo sin caracteres especiales.')

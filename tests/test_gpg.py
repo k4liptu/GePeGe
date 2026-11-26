@@ -2,6 +2,7 @@
 import os
 import hashlib
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 from gpg_backend import execute
@@ -18,6 +19,25 @@ class Integration(unittest.TestCase):
         self.assertIn('--symmetric', encrypted['teaching']); self.assertIn('> mensaje-cifrado.asc', encrypted['teaching'])
         decrypted = execute({'action':'decrypt','text':encrypted['output'],'password':'secreto-prueba'})
         self.assertTrue(decrypted['ok'], decrypted['detail']); self.assertEqual(decrypted['output'], 'Hola, clase: ñ')
+    def test_binary_encrypted_message(self):
+        encrypted = subprocess.run(['gpg', '--batch', '--yes', '--pinentry-mode', 'loopback',
+                                    '--passphrase', 'prueba', '--symmetric'],
+                                   input='Mensaje binario: ñ'.encode(), capture_output=True, check=True)
+        result = execute({'action':'decrypt', 'encrypted_bytes':encrypted.stdout, 'password':'prueba'})
+        self.assertTrue(result['ok'], result['detail'])
+        self.assertEqual(result['output'], 'Mensaje binario: ñ')
+
+    def test_binary_file_round_trip(self):
+        original = b'\x00\xff\x80 datos binarios\n'
+        encrypted = execute({'action':'encrypt', 'mode':'symmetric', 'content_bytes':original,
+                             'format':'gpg', 'password':'prueba'})
+        self.assertTrue(encrypted['ok'], encrypted['detail'])
+        self.assertTrue(encrypted['output_bytes'])
+        self.assertIn('mensaje-cifrado.gpg', encrypted['teaching'])
+        decrypted = execute({'action':'decrypt', 'encrypted_bytes':encrypted['output_bytes'], 'password':'prueba'})
+        self.assertTrue(decrypted['ok'], decrypted['detail'])
+        self.assertEqual(decrypted['output_bytes'], original)
+
     def test_generate_export_import_encrypt_sign_decrypt(self):
         generated = execute({'action':'generate','name':'Prueba Alumno','email':'alumno@example.org','password':'clave-prueba','algorithm':'rsa2048','expiry':'1y'})
         self.assertTrue(generated['ok'], generated['detail'])
