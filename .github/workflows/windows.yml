@@ -51,7 +51,7 @@ jobs:
         run: |
           $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
           if (-not (Test-Path $nsis)) { throw 'NSIS no está disponible en el ejecutor' }
-          & $nsis packaging/windows/gepege.nsi
+          & $nsis "/DROOT=$pwd" packaging/windows/gepege.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $name = 'GePeGe-0.2b-Windows-x86_64-Setup.exe'
           $hash = (Get-FileHash $name -Algorithm SHA256).Hash.ToLower()

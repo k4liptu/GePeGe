@@ -1,6 +1,6 @@
 Unicode true
 Name "GePeGe 0.2b"
-OutFile "GePeGe-0.2b-Windows-x86_64-Setup.exe"
+OutFile "${ROOT}\GePeGe-0.2b-Windows-x86_64-Setup.exe"
 InstallDir "$PROGRAMFILES64\GePeGe"
 RequestExecutionLevel admin
 ShowInstDetails show
@@ -12,7 +12,7 @@ UninstPage instfiles
 
 Section "GePeGe" SEC_MAIN
   SetOutPath "$INSTDIR"
-  File /r "dist\GePeGe\*"
+  File /r "${ROOT}\dist\GePeGe\*"
   CreateDirectory "$SMPROGRAMS\GePeGe"
   CreateShortcut "$SMPROGRAMS\GePeGe\GePeGe.lnk" "$INSTDIR\GePeGe.exe"
   WriteUninstaller "$INSTDIR\Desinstalar.exe"
@@ -28,7 +28,7 @@ Section "GePeGe" SEC_MAIN
   MessageBox MB_OK|MB_ICONINFORMATION "GePeGe necesita GnuPG. A continuación se abrirá su instalador oficial incluido. Sigue sus instrucciones para completar la instalación."
   InitPluginsDir
   SetOutPath "$PLUGINSDIR"
-  File /oname=gnupg-installer.exe "gnupg-installer.exe"
+  File /oname=gnupg-installer.exe "${ROOT}\gnupg-installer.exe"
   ExecWait '"$PLUGINSDIR\gnupg-installer.exe"' $0
   IfFileExists "$PROGRAMFILES32\GnuPG\bin\gpg.exe" done
   IfFileExists "$PROGRAMFILES64\GnuPG\bin\gpg.exe" done
