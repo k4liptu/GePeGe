@@ -154,7 +154,7 @@ def execute(payload):
         usage = 'default' if algorithm == 'default' else 'cert,sign'
         primary = run_gpg(['--status-fd', '2', '--quick-generate-key', uid, algorithm, usage, expiry], password=password)
         if not primary['ok']: return primary
-        match = re.search(r'^\[GNUPG:\] KEY_CREATED [A-Z] ([0-9A-F]+)$', primary['detail'], re.MULTILINE)
+        match = re.search(r'^\[GNUPG:\] KEY_CREATED [A-Z] ([0-9A-F]+)\r?$', primary['detail'], re.MULTILINE)
         if not match:
             primary.update(ok=False, detail=primary['detail'] + '\nLa clave se creó, pero no se pudo identificar para añadir la subclave de cifrado.')
             return primary
