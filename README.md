@@ -1,29 +1,53 @@
 # GePeGe
 
-Aplicación de escritorio para aprender a usar GnuPG con una interfaz visual. Está pensada para alumnado de ciclos formativos: muestra el comando usado y el diagnóstico de GPG para relacionar los botones con la terminal.
+GePeGe es una aplicación de escritorio para aprender a usar GnuPG (GPG). Su interfaz en castellano permite practicar el cifrado y la gestión de claves, y muestra tanto un ejemplo de comando para la terminal como el diagnóstico de GPG.
 
 ![Ventana de GePeGe con un ejemplo de cifrado simétrico](assets/GePeGe-cifrar.png)
 
-**Descarga:** consulta las [versiones publicadas](https://github.com/k4liptu/GePeGe/releases) para obtener el AppImage para Linux x86_64.
+## Descarga e instalación
 
-La consola muestra primero un ejemplo didáctico para la terminal y después el comando real usado por la aplicación. Los nombres `clave.asc`, `mensaje.txt` y los de salida son ejemplos: los archivos de entrada deben existir y las redirecciones de salida pueden sobrescribir archivos; GePeGe pasa el texto por la entrada estándar. El comando real añade opciones de automatización y, cuando es necesario, pasa la contraseña mediante un descriptor privado. La consulta en línea es HTTPS y no ejecuta GPG. La comparación de hashes la realiza GePeGe después de calcularlos con GPG.
+La última versión publicada está disponible en [GitHub Releases](https://github.com/k4liptu/GePeGe/releases). Para Linux x86-64, descarga el AppImage y dale permiso de ejecución:
 
-## Qué permite hacer
+```bash
+chmod +x GePeGe-0.2a-x86_64.AppImage
+./GePeGe-0.2a-x86_64.AppImage
+```
 
-- Cifrar y descifrar mensajes de texto con contraseña o claves públicas/privadas.
-- Firmar al cifrar, seleccionando una clave privada; al descifrar, GPG muestra el resultado de la verificación en el diagnóstico.
-- Crear pares de claves, consultar el llavero, importar claves y exportar claves públicas en ASCII. La clave pública recién generada también se puede subir voluntariamente a keys.openpgp.org tras confirmar su huella.
-- Consultar información de una clave seleccionada y borrarla tras dos confirmaciones. Si existe su clave privada, se borran tanto la privada como la pública y sus subclaves.
-- Consultar por correo o huella completa en keys.openpgp.org directamente desde la aplicación y después importar el resultado.
-- Importar textos y archivos binarios, cifrar en formato ASCII o binario `.gpg` y guardar los resultados; importar claves ASCII.
-- Elegir el tipo y tamaño de las claves RSA y su caducidad; seleccionar el algoritmo de cifrado del mensaje o dejarlo en automático.
-- Calcular y comparar hashes SHA-256, SHA-512 o SHA-1 de cualquier archivo. SHA-1 se incluye únicamente para prácticas con sistemas antiguos.
+La aplicación necesita **GnuPG** (`gpg`) instalado en el sistema. El AppImage no necesita Python instalado. Consulta las notas de cada release para conocer sus requisitos y comprobar su archivo SHA-256.
 
-## Requisitos e instalación en Linux
+La versión 0.2b está en desarrollo e incorpora la publicación opcional de claves públicas y una compilación para Windows. El paquete de Windows todavía está pendiente de validación y no forma parte de la última release publicada.
 
-Se necesita Python 3.10 o superior, GnuPG 2.2 o superior y una sesión gráfica Linux con bibliotecas compatibles con Qt. Para la búsqueda en línea se necesitan los certificados de confianza del sistema (`ca-certificates`). En Debian/Kali, instala los paquetes de Python, `python3-venv` y `gnupg` con el gestor de paquetes de la distribución. En Arch y derivadas, instala `python` y `gnupg`.
+## Funciones
 
-Desde la carpeta del proyecto:
+- Cifrar y descifrar textos y archivos mediante una contraseña o un par de claves OpenPGP, con salida ASCII (`.asc`) o binaria (`.gpg`).
+- Firmar al cifrar y consultar el diagnóstico de verificación al descifrar.
+- Generar claves, consultar el llavero, importar y exportar claves públicas, y borrar claves tras confirmación.
+- Buscar claves en keys.openpgp.org. En el código de desarrollo también se puede publicar voluntariamente la clave pública recién generada.
+- Calcular y comparar los hashes SHA-256, SHA-512 y SHA-1 de un archivo. SHA-1 se incluye para prácticas con sistemas antiguos.
+- Consultar explicaciones y ejemplos de comandos GPG desde la aplicación.
+
+## Uso básico
+
+1. Para cifrado asimétrico, crea un par de claves o importa la clave pública del destinatario desde **Almacén de claves**. Comprueba siempre su huella por un canal independiente.
+2. En **Cifrar**, escribe un mensaje o importa un archivo, elige el destinatario y, opcionalmente, una clave para firmar. Para cifrado simétrico, selecciona ese modo e introduce una contraseña.
+3. Copia o guarda el resultado y compártelo. Comunica las contraseñas por un canal independiente.
+4. En **Descifrar**, pega o importa el mensaje e introduce la contraseña del mensaje o de tu clave privada. Consulta el diagnóstico para conocer el resultado y, si procede, la verificación de la firma.
+
+Una firma válida indica que corresponde a una clave; no demuestra por sí sola la identidad de su propietario. Si GPG no confía plenamente en una clave importada, GePeGe permite confirmar su uso para un mensaje después de comprobar la huella, sin cambiar la confianza guardada en el llavero.
+
+## Consideraciones y límites
+
+GePeGe utiliza el llavero GPG del usuario actual. La eliminación de una clave con parte privada elimina ambas partes y sus subclaves tras dos confirmaciones. Conserva una copia de seguridad de tus claves privadas.
+
+Los archivos se cargan en memoria. Los resultados reconocidos como texto UTF-8 se muestran en el editor y se guardan como texto; los demás se guardan como datos binarios. Las claves importadas deben estar en formato ASCII. Al cifrar simétricamente y firmar en una sola operación se utiliza la misma contraseña para ambas funciones.
+
+La búsqueda y la publicación de claves requieren conexión a Internet. En la versión en desarrollo, la publicación envía únicamente la clave pública a keys.openpgp.org tras solicitar confirmación. Si la clave incluye un correo, el servicio puede enviar un enlace de verificación para habilitar su búsqueda por esa dirección.
+
+La consola muestra un ejemplo didáctico y, después, la ejecución real. Los nombres y redirecciones del ejemplo son orientativos y pueden sobrescribir archivos si se ejecutan sin revisarlos. GePeGe no incluye la contraseña en los argumentos del comando mostrado.
+
+## Ejecutar desde el código
+
+En Linux, instala Python 3.10 o superior, GnuPG 2.2 o superior y las bibliotecas gráficas necesarias para Qt. Para las funciones en línea se necesitan los certificados de confianza del sistema.
 
 ```bash
 python3 -m venv .venv
@@ -31,75 +55,27 @@ python3 -m venv .venv
 .venv/bin/python app.py
 ```
 
-### Ejecutar desde Visual Studio Code
+El código de desarrollo busca GnuPG también en las ubicaciones habituales de Gpg4win en Windows. Allí se necesita instalar [Gpg4win](https://www.gpg4win.org/download.html) por separado. El script `packaging/windows/Instalar-Gpg4win.ps1` ofrece instalarlo mediante winget tras pedir confirmación.
 
-Abre la carpeta `GePeGe` completa en VS Code, instala la extensión de Python de Microsoft y permite que VS Code confíe en la carpeta si aparece esa pregunta. En **Ejecutar y depurar**, elige **GePeGe: abrir aplicación** y pulsa el triángulo verde o `F5`. La configuración usa el Python de `.venv`, que debe estar preparado con los comandos anteriores. Para detener la aplicación, cierra su ventana o utiliza el botón de detener de VS Code.
+## Pruebas y compilación
 
-Ejecutar abre la aplicación desde el código; no genera un AppImage. El empaquetado se explica más abajo.
-
-La ventana utiliza el llavero GPG del usuario actual (`~/.gnupg`, salvo que se defina `GNUPGHOME`). Los comandos se ejecutan localmente; únicamente la consulta de claves necesita conexión a Internet. La contraseña se pasa a GPG mediante un descriptor privado, no en el comando ni en archivos. El comando mostrado representa el descriptor mediante `<descriptor>`; no es directamente copiable tal cual.
-
-## Uso en clase
-
-1. Crea una clave desde **Generar claves** y comparte únicamente la clave pública exportada con el botón de su fila en **Almacén de claves**. También puedes subir la clave pública recién creada a keys.openpgp.org desde esa pestaña. Si incluyes correo, recibirás un enlace para verificarlo y permitir búsquedas por dirección. La publicación es voluntaria y la clave privada nunca se envía.
-2. Importa la clave pública de otro alumno y verifica su huella por otro canal.
-3. En **Cifrar**, escribe el texto, selecciona cifrado asimétrico y el destinatario. Opcionalmente, selecciona tu clave para firmar.
-4. Comparte el resultado. El destinatario lo importa o pega en **Descifrar** y utiliza su contraseña para descifrarlo. También puede importar mensajes OpenPGP binarios, incluidos archivos `.gpg`, `.pgp` o `.txt`; los resultados binarios descifrados se guardan en un archivo.
-5. Para practicar cifrado simétrico, selecciona esa opción y comparte la contraseña por un canal seguro diferente.
-
-GPG puede rechazar claves públicas importadas si aún no confía en ellas. Comprueba la huella con el destinatario por un canal independiente; GePeGe permite confirmar su uso para ese mensaje sin modificar la confianza del llavero. Una firma válida acredita su relación con una clave, pero no verifica por sí sola la identidad de su propietario.
-
-## Limitaciones de esta primera versión
-
-Se admiten mensajes UTF-8, archivos binarios y claves ASCII. El cifrado asimétrico usa la confianza de GPG o, previa confirmación para ese mensaje, permite usar una clave sin confianza plena. GPG sigue rechazando claves no aptas para cifrar. Al cifrar simétricamente y firmar a la vez se utiliza la misma contraseña para ambas operaciones. Los mensajes y las contraseñas se mantienen temporalmente en memoria durante la operación; no se guardan deliberadamente en archivos de la aplicación. Se exportan claves públicas, no privadas, mediante un diálogo para elegir el destino. La búsqueda depende de la disponibilidad y las políticas de publicación del servidor.
-
-## Pruebas
+Las pruebas de integración crean llaveros temporales y no modifican el llavero personal:
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
-QT_QPA_PLATFORM=offscreen .venv/bin/python -c 'from PySide6.QtWidgets import QApplication; from app import Window; a=QApplication([]); w=Window(); w.show(); a.processEvents(); print("Ventana creada")'
 ```
 
-Las pruebas de GPG crean un llavero temporal y no modifican el llavero personal.
+GitHub Actions ejecuta las comprobaciones de Linux. El flujo de Windows está en preparación y su validación aún no ha finalizado.
 
-## Organización del proyecto
-
-- `app.py`: ventana, pestañas y acciones de la interfaz.
-- `gepege_ui.py`: estilos, iconos y componentes visuales compartidos.
-- `gpg_backend.py`: ejecución de GPG y preparación de los comandos didácticos.
-- `tests/`: pruebas de las operaciones con llaveros temporales.
-- `packaging/`: icono, entrada de escritorio y guion para crear el AppImage.
-- `requirements*.txt`: dependencias de ejecución y de compilación.
-- `DEPENDENCIAS.md`: referencias para revisar las licencias de componentes externos antes de distribuirlos.
-- `AGENTS.md`: indicaciones para asistentes que trabajen en el proyecto.
-- `.github/workflows/`: comprobaciones automáticas que GitHub ejecutará cuando se suban cambios o se abra una propuesta.
-- `.vscode/`: configuración para abrir la aplicación y ejecutar pruebas desde Visual Studio Code.
-
-La carpeta `.venv` y los archivos generados, incluidos los AppImage, no se incorporan a Git. Consulta [GUIA_GITHUB.md](GUIA_GITHUB.md) para preparar la primera publicación.
-
-## Preparar un AppImage
-
-El guion `packaging/build-appimage.sh` prepara un AppDir con PyInstaller y lo convierte con `appimagetool`, que debe instalarse por separado y estar en `PATH`. La aplicación empaquetada sigue necesitando `gpg` en el sistema. Para compatibilidad amplia, compila en una distribución base suficientemente antigua para los sistemas de destino y prueba el resultado en Kali y otras distribuciones; la compatibilidad no está garantizada por el formato por sí solo.
+Para compilar el AppImage se necesitan las dependencias de `requirements-build.txt` y `appimagetool` en el `PATH`:
 
 ```bash
 .venv/bin/pip install -r requirements-build.txt
 ./packaging/build-appimage.sh
 ```
 
-Este repositorio no incluye `appimagetool` ni un AppImage precompilado. Comprueba también los requisitos de FUSE de la distribución donde lo vayas a ejecutar.
-
-Para la versión de prueba se utilizó Ubuntu 22.04 en un contenedor con `packaging/build-ubuntu22-container.sh`. El guion espera el código en `/src` (solo lectura), la carpeta de salida en `/out`, y los archivos oficiales `appimagetool` y el runtime de AppImage en `/tools/appimagetool` y `/tools/runtime`. Instala las dependencias dentro del contenedor; no debe ejecutarse directamente en el sistema anfitrión.
-
-## Estado
-
-Versión 0.2b. Desde **Ayuda → Consultar actualizaciones** puedes abrir la página de versiones; la descarga y sustitución del AppImage son manuales. La versión 0.1b se compiló en Ubuntu 22.04; la compatibilidad de esta revisión depende del entorno de compilación y aún falta probarla de forma interactiva en otras distribuciones.
+Para una mayor compatibilidad, `packaging/build-ubuntu22-container.sh` prepara el AppImage dentro de Ubuntu 22.04. El script espera el código en `/src`, la carpeta de salida en `/out`, y `appimagetool` y su runtime en `/tools`. El paquete resultante sigue necesitando GnuPG en el sistema.
 
 ## Licencia
 
-El código propio de GePeGe se distribuye bajo la [GNU General Public License, versión 3](LICENSE) (GPL-3.0-only). Las dependencias tienen sus propias licencias; consulta [DEPENDENCIAS.md](DEPENDENCIAS.md) antes de distribuir el AppImage.
-
-## Windows
-
-Descarga el ZIP de Windows x86-64 desde Releases y extrae todo su contenido. Instala [Gpg4win](https://www.gpg4win.org/download.html) por separado, o ejecuta `Instalar-Gpg4win.ps1` con PowerShell y confirma la instalación mediante winget. Abre `GePeGe/GePeGe.exe`. No se necesita instalar Python. GePeGe utiliza el llavero GnuPG del usuario y detecta GPG en PATH o en las ubicaciones habituales de Gpg4win.
-
-El paquete de Windows se compila y prueba en GitHub Actions con `.github/workflows/windows.yml`. No se incluye GnuPG en el ZIP: su instalación y actualización son independientes.
+GePeGe se distribuye bajo la [GNU General Public License, versión 3](LICENSE). Las dependencias tienen sus propias licencias; consulta [DEPENDENCIAS.md](DEPENDENCIAS.md) para conocerlas.
