@@ -15,14 +15,14 @@ chmod +x GePeGe-0.2a-x86_64.AppImage
 
 La aplicación necesita **GnuPG** (`gpg`) instalado en el sistema. El AppImage no necesita Python instalado. Consulta las notas de cada release para conocer sus requisitos y comprobar su archivo SHA-256.
 
-La versión 0.2b está en desarrollo e incorpora la publicación opcional de claves públicas y una compilación para Windows. El paquete de Windows todavía está pendiente de validación y no forma parte de la última release publicada.
+La [versión de prueba 0.2b](https://github.com/k4liptu/GePeGe/releases/tag/v0.2b) incorpora la publicación opcional de claves públicas y un instalador para Windows x86-64. El instalador incluye GnuPG y abre su instalación oficial cuando no lo encuentra. Requiere permisos de administrador; su uso interactivo en Windows está pendiente de más pruebas.
 
 ## Funciones
 
 - Cifrar y descifrar textos y archivos mediante una contraseña o un par de claves OpenPGP, con salida ASCII (`.asc`) o binaria (`.gpg`).
 - Firmar al cifrar y consultar el diagnóstico de verificación al descifrar.
 - Generar claves, consultar el llavero, importar y exportar claves públicas, y borrar claves tras confirmación.
-- Buscar claves en keys.openpgp.org. En el código de desarrollo también se puede publicar voluntariamente la clave pública recién generada.
+- Buscar claves en keys.openpgp.org. Desde la versión 0.2b también se puede publicar voluntariamente la clave pública recién generada.
 - Calcular y comparar los hashes SHA-256, SHA-512 y SHA-1 de un archivo. SHA-1 se incluye para prácticas con sistemas antiguos.
 - Consultar explicaciones y ejemplos de comandos GPG desde la aplicación.
 
@@ -41,7 +41,7 @@ GePeGe utiliza el llavero GPG del usuario actual. La eliminación de una clave c
 
 Los archivos se cargan en memoria. Los resultados reconocidos como texto UTF-8 se muestran en el editor y se guardan como texto; los demás se guardan como datos binarios. Las claves importadas deben estar en formato ASCII. Al cifrar simétricamente y firmar en una sola operación se utiliza la misma contraseña para ambas funciones.
 
-La búsqueda y la publicación de claves requieren conexión a Internet. En la versión en desarrollo, la publicación envía únicamente la clave pública a keys.openpgp.org tras solicitar confirmación. Si la clave incluye un correo, el servicio puede enviar un enlace de verificación para habilitar su búsqueda por esa dirección.
+La búsqueda y la publicación de claves requieren conexión a Internet. Desde la versión 0.2b, la publicación envía únicamente la clave pública a keys.openpgp.org tras solicitar confirmación. Si la clave incluye un correo, el servicio puede enviar un enlace de verificación para habilitar su búsqueda por esa dirección.
 
 La consola muestra un ejemplo didáctico y, después, la ejecución real. Los nombres y redirecciones del ejemplo son orientativos y pueden sobrescribir archivos si se ejecutan sin revisarlos. GePeGe no incluye la contraseña en los argumentos del comando mostrado.
 
@@ -65,7 +65,7 @@ Las pruebas de integración crean llaveros temporales y no modifican el llavero 
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-GitHub Actions ejecuta las comprobaciones de Linux. El flujo de Windows está en preparación y su validación aún no ha finalizado.
+GitHub Actions ejecuta las comprobaciones de Linux. Las pruebas de integración y de la interfaz también se ejecutan en Windows; aún falta ampliar la validación interactiva del instalador.
 
 Para compilar el AppImage se necesitan las dependencias de `requirements-build.txt` y `appimagetool` en el `PATH`:
 
